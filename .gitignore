@@ -1,0 +1,25 @@
+# VS Code
+.vscode/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Spring Boot
+backend/target/
+
+# Flutter
+mobile/.dart_tool/
+mobile/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
