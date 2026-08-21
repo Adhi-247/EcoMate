@@ -428,7 +428,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     const Text(
-                      'EcoMate • Smart Waste & Recycling',
+                      'EcoMate â€¢ Smart Waste & Recycling',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF587672),
