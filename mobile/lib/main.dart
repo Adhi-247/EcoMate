@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/auth_wrapper.dart';
-
+import 'screens/splash_screen.dart';
 void main() {
   runApp(const EcoMateApp());
 }
@@ -13,7 +12,7 @@ class EcoMateApp extends StatelessWidget {
     return MaterialApp(
       title: 'EcoMate',
       debugShowCheckedModeBanner: false,
-      home: const AuthWrapper(),
+      home: const SplashScreen(),
     );
   }
 }
