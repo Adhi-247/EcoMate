@@ -437,8 +437,51 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
-                ],
+                    const SizedBox(height: 22),
+
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.person_add_alt_1_rounded,
+                      ),
+                      label: const Text(
+                        'Create an Account',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor:
+                            const Color(0xFF68E1BF),
+                        side: const BorderSide(
+                          color: Color(0xFF2F605C),
+                        ),
+                        minimumSize:
+                            const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'EcoMate â€¢ Smart Waste & Recycling',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF587672),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
