@@ -13,28 +13,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   final AuthService _authService = AuthService();
 
   String _selectedRole = 'RESIDENT';
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   String? _errorMessage;
-
-  final List<String> _roles = [
-    'RESIDENT',
-    'COLLECTOR',
-    'RECYCLING_OFFICER',
-  ];
 
   Future<void> _register() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
       setState(() {
         _errorMessage = 'Please fill all fields';
+      });
+      return;
+    }
+
+    if (password != confirmPassword) {
+      setState(() {
+        _errorMessage = 'Passwords do not match';
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      setState(() {
+        _errorMessage = 'Password must be at least 8 characters';
+      });
+      return;
+    }
+
+    final emailRegex = RegExp(
+      r'^[\w\.-]+@[\w\.-]+\.\w+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      setState(() {
+        _errorMessage = 'Please enter a valid email address';
       });
       return;
     }
@@ -54,13 +79,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Registration successful. Please login.',
+      final overlay = Overlay.of(context);
+
+      final overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+          top: 30,
+          left: 20,
+          right: 20,
+          child: SafeArea(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xCC4CAF50),
+                      Color(0xCC1F5520),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: 0.20,
+                      ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Successfully registered!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       );
+
+      overlay.insert(overlayEntry);
+
+      await Future.delayed(
+        const Duration(seconds: 2),
+      );
+
+      overlayEntry.remove();
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
@@ -89,52 +173,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  InputDecoration _inputDecoration({
+  InputDecoration _fieldDecoration({
     required String label,
     required IconData icon,
-    String? hint,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
       labelText: label,
-      hintText: hint,
-      labelStyle: const TextStyle(
-        color: Color(0xFF9CB8B3),
-      ),
-      hintStyle: const TextStyle(
-        color: Color(0xFF66827E),
-      ),
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFF6FE3C1),
+        color: const Color(0xFF2E7D32),
       ),
       suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: const Color(0xFF102D2F),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 18,
+      labelStyle: const TextStyle(
+        color: Color(0xFF737A74),
       ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF1E4849),
+      enabledBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: Color(0xFFD9E3DA),
         ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF1E4849),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF68E1BF),
-          width: 1.5,
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: Color(0xFF2E7D32),
+          width: 1.7,
         ),
       ),
     );
@@ -143,299 +209,280 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071D20),
+      backgroundColor: const Color(0xFFF8FAF7),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: 480,
+                maxWidth: 430,
               ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 28,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B2528),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: const Color(0xFF163D3F),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: 0.25,
-                      ),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Color(0xFFB7D4D0),
-                        ),
-                      ),
-                    ),
+              child: Column(
+                children: [
+                  // ==========================
+                  // TOP IMAGE SECTION
+                  // ==========================
 
-                    const SizedBox(height: 5),
-
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF12383A),
-                        borderRadius:
-                            BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.eco_rounded,
-                        color: Color(0xFF65E0BD),
-                        size: 30,
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    const Text(
-                      'EcoMate Registration',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Create your account and become part of a cleaner, greener community.',
-                      style: TextStyle(
-                        color: Color(0xFF9AB5B1),
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    const Text(
-                      'Select Account Type',
-                      style: TextStyle(
-                        color: Color(0xFFC9DEDA),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Row(
+                  SizedBox(
+                    height: 290,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Expanded(
-                          child: _roleButton(
-                            role: 'RESIDENT',
-                            label: 'Resident',
-                            icon: Icons.groups_rounded,
+                        // CHANGE IMAGE HERE
+                        Image.asset(
+                          'assets/images/register_background.jpg',
+                          fit: BoxFit.cover,
+                        ),
+
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0x44000000),
+                                Color(0x99000000),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _roleButton(
-                            role: 'COLLECTOR',
-                            label: 'Collector',
-                            icon:
-                                Icons.local_shipping_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _roleButton(
-                            role: 'RECYCLING_OFFICER',
-                            label: 'Recycling',
-                            icon:
-                                Icons.recycling_rounded,
+
+                        const Positioned(
+                          left: 28,
+                          bottom: 75,
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Register',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                'Create your EcoMate account',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                  ),
 
-                    const SizedBox(height: 24),
+                  // ==========================
+                  // REGISTER CARD
+                  // ==========================
 
-                    TextField(
-                      controller: _nameController,
-                      style: const TextStyle(
+                  Transform.translate(
+                    offset: const Offset(0, -55),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      padding: const EdgeInsets.fromLTRB(
+                        24,
+                        28,
+                        24,
+                        28,
+                      ),
+                      decoration: BoxDecoration(
                         color: Colors.white,
-                      ),
-                      decoration: _inputDecoration(
-                        label: 'Full Name',
-                        hint: 'Enter your name',
-                        icon: Icons.person_outline,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextField(
-                      controller: _emailController,
-                      keyboardType:
-                          TextInputType.emailAddress,
-                      style: const TextStyle(
-                        color: Colors.white,
-                      ),
-                      decoration: _inputDecoration(
-                        label: 'Email Address',
-                        hint: 'name@example.com',
-                        icon: Icons.email_outlined,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(
-                        color: Colors.white,
-                      ),
-                      decoration: _inputDecoration(
-                        label: 'Secure Password',
-                        hint: 'Enter password',
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword =
-                                  !_obscurePassword;
-                            });
-                          },
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: const Color(0xFF789B96),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Use a secure password for your EcoMate account.',
-                      style: TextStyle(
-                        color: Color(0xFF708F8B),
-                        fontSize: 11,
-                      ),
-                    ),
-
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.redAccent
-                                .withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: 0.12,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.stretch,
+                        children: [
+                          // ROLE SELECTOR
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _roleButton(
+                                  role: 'RESIDENT',
+                                  label: 'Resident',
+                                  icon: Icons.person_rounded,
                                 ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              Expanded(
+                                child: _roleButton(
+                                  role: 'COLLECTOR',
+                                  label: 'Collector',
+                                  icon: Icons.local_shipping_rounded,
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              Expanded(
+                                child: _roleButton(
+                                  role: 'RECYCLING_OFFICER',
+                                  label: 'Recycling',
+                                  icon: Icons.recycling_rounded,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          TextField(
+                            controller: _nameController,
+                            decoration: _fieldDecoration(
+                              label: 'Full name',
+                              icon: Icons.person_outline,
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          TextField(
+                            controller: _emailController,
+                            keyboardType:
+                                TextInputType.emailAddress,
+                            decoration: _fieldDecoration(
+                              label: 'Your email address',
+                              icon: Icons.email_outlined,
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            decoration: _fieldDecoration(
+                              label: 'Password',
+                              icon: Icons.lock_outline,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword =
+                                        !_obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons
+                                          .visibility_off_outlined
+                                      : Icons
+                                          .visibility_outlined,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          TextField(
+                            controller:
+                                _confirmPasswordController,
+                            obscureText:
+                                _obscureConfirmPassword,
+                            decoration: _fieldDecoration(
+                              label: 'Confirm password',
+                              icon: Icons.lock_reset_outlined,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons
+                                          .visibility_off_outlined
+                                      : Icons
+                                          .visibility_outlined,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 13,
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
 
-                    const SizedBox(height: 24),
+                          const SizedBox(height: 28),
 
-                    SizedBox(
-                      height: 54,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFF66DDBA),
-                          foregroundColor:
-                              const Color(0xFF07302C),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color:
-                                      Color(0xFF07302C),
+                          SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color(0xFF2E7D32),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(24),
                                 ),
-                              )
-                            : const Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                  ),
-                                ],
                               ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child:
+                                          CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign up',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight:
+                                            FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 18),
-
-                    Row(
+                  Transform.translate(
+                    offset: const Offset(0, -35),
+                    child: Row(
                       mainAxisAlignment:
                           MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Already have an account? ',
+                          'Back to ',
                           style: TextStyle(
-                            color: Color(0xFF91AAA7),
+                            color: Color(0xFF777D78),
                           ),
                         ),
                         GestureDetector(
@@ -449,17 +496,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             );
                           },
                           child: const Text(
-                            'Login here',
+                            'Sign in',
                             style: TextStyle(
-                              color: Color(0xFF68E1BF),
+                              color: Color(0xFF2E7D32),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -469,60 +516,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _roleButton({
-    required String role,
-    required String label,
-    required IconData icon,
-  }) {
-    final bool selected = _selectedRole == role;
+  required String role,
+  required String label,
+  required IconData icon,
+}) {
+  final selected = _selectedRole == role;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: () {
-        setState(() {
-          _selectedRole = role;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 6,
-        ),
-        decoration: BoxDecoration(
+  return InkWell(
+    onTap: () {
+      setState(() {
+        _selectedRole = role;
+      });
+    },
+    borderRadius: BorderRadius.circular(18),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(
+        vertical: 12,
+        horizontal: 5,
+      ),
+      decoration: BoxDecoration(
+        color: selected
+            ? const Color(0xFF2E7D32)
+            : const Color(0xFFEAF3E9),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
           color: selected
-              ? const Color(0xFF55D8B4)
-              : const Color(0xFF102D2F),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFF55D8B4)
-                : const Color(0xFF1C4445),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: selected
-                  ? const Color(0xFF06352F)
-                  : const Color(0xFFA1BDB8),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? const Color(0xFF06352F)
-                    : const Color(0xFFA1BDB8),
-              ),
-            ),
-          ],
+              ? const Color(0xFF2E7D32)
+              : const Color(0xFFC8DEC9),
         ),
       ),
-    );
-  }
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 23,
+            color: selected
+                ? Colors.white
+                : const Color(0xFF2E7D32),
+          ),
+
+          const SizedBox(height: 5),
+
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected
+                  ? Colors.white
+                  : const Color(0xFF2E7D32),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }
