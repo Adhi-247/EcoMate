@@ -34,7 +34,8 @@ public class SecurityConfig {
 
             .requestMatchers(
                             "/api/auth/login",
-                            "/api/auth/register"
+                            "/api/auth/register",
+                            "/api/recycling/public/**"
             ).permitAll()
 
                 .requestMatchers("/api/auth/me")
@@ -46,8 +47,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/collector/**")
                     .hasRole("COLLECTOR")
 
-                .requestMatchers("/api/recycling/**")
+                .requestMatchers("/api/recycling/my-centre/**")
                     .hasRole("RECYCLING_OFFICER")
+
+                .requestMatchers("/api/recycling/**")
+                    .authenticated()
 
                 .requestMatchers("/api/council/**")
                     .hasRole("COUNCIL_ADMIN")

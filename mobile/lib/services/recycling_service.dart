@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../models/recycling_centre.dart';
 import '../models/waste_category.dart';
+import 'auth_service.dart';
 
 class RecyclingService {
+  static const String baseUrl = 'http://localhost:8080';
+  final AuthService _authService = AuthService();
   static const List<WasteCategory> _categories = [
     WasteCategory(
       id: 'plastics',
@@ -229,9 +234,11 @@ class RecyclingService {
     ),
   ];
 
-  static const List<RecyclingCentre> _centres = [
-    RecyclingCentre(
+  static final List<RecyclingCentre> _centres = [
+    const RecyclingCentre(
       id: 'rc_01',
+      officerId: 14,
+      officerEmail: 'stharanga.rog@gmail.com',
       name: 'GreenCycle Central Hub',
       address: 'No. 45 Baseline Road, Colombo 09',
       city: 'Colombo',
@@ -244,19 +251,28 @@ class RecyclingService {
         'Plastic Bottles (PET #1)',
         'Rigid Plastics (HDPE #2, PP #5)',
         'Cardboard & Office Paper',
-        'Aluminum & Tin Cans',
+        'Aluminum Beverage Cans',
         'Glass Bottles & Jars',
       ],
       unsupportedMaterials: [
-        'Hazardous Chemicals',
-        'Medical & Clinical Waste',
-        'Single-use Polythene Bags',
+        'Newspapers & Books',
+        'Steel Food Tins',
+        'Mobile Phones & Tablets',
+        'Computers & Laptops',
+        'Batteries & Power Banks',
+        'Cables, Adapters & Small Appliances',
+        'Fruit & Vegetable Scraps',
+        'Garden Leaves & Yard Waste',
+        'Copper Wires & Brass Fittings',
+        'Old Metal Cookware',
       ],
       notes:
           'Offers drop-off points for bulk recyclables. Weight-based incentives provided.',
     ),
-    RecyclingCentre(
+    const RecyclingCentre(
       id: 'rc_02',
+      officerId: 7,
+      officerEmail: 'peterparkerr@gmail.com',
       name: 'EcoTech E-Waste Recovery Centre',
       address: '120 High Level Road, Maharagama',
       city: 'Maharagama',
@@ -280,8 +296,10 @@ class RecyclingService {
       notes:
           'Specialized authorized e-waste facility. Free certified data wiping on computer drives.',
     ),
-    RecyclingCentre(
+    const RecyclingCentre(
       id: 'rc_03',
+      officerId: 4,
+      officerEmail: 'sumudu@gmail.com',
       name: 'BioRecycle Organic Composting Plant',
       address: '88 Temple Road, Nawala, Rajagiriya',
       city: 'Rajagiriya',
@@ -305,7 +323,7 @@ class RecyclingService {
       notes:
           'Free organic compost bag exchange for every 10kg of kitchen waste delivered.',
     ),
-    RecyclingCentre(
+    const RecyclingCentre(
       id: 'rc_04',
       name: 'MetalWorks Recycling & Scrap Yard',
       address: '15 Industrial Zone, Kelaniya',
@@ -330,7 +348,7 @@ class RecyclingService {
       notes:
           'Instant cash payouts for scrap metals based on daily market weight rates.',
     ),
-    RecyclingCentre(
+    const RecyclingCentre(
       id: 'rc_05',
       name: 'Urban Clean Glass & Paper Depot',
       address: '202 Galle Road, Dehiwala',
@@ -422,6 +440,124 @@ class RecyclingService {
     } catch (_) {
       return null;
     }
+  }
+
+  // Officer-specific queries & mutations
+  Future<RecyclingCentre?> getCentreForOfficer(String? email) async {
+    if (email == null || email.isEmpty) return null;
+
+    final token = await _authService.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        final response = await http.get(
+          Uri.parse('$baseUrl/api/recycling/my-centre'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200 && response.body.isNotEmpty) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final centre = RecyclingCentre.fromJson(data);
+          // Keep local cache synced
+          final idx = _centres.indexWhere((c) => c.id == centre.id || c.officerEmail == email);
+          if (idx >= 0) {
+            _centres[idx] = centre;
+          } else {
+            _centres.add(centre);
+          }
+          return centre;
+        }
+      } catch (_) {
+        // Backend offline fallback to local state
+      }
+    }
+
+    try {
+      return _centres.firstWhere(
+        (c) => c.officerEmail?.toLowerCase() == email.trim().toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveOrUpdateCentre(RecyclingCentre centre) async {
+    final token = await _authService.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await http.put(
+          Uri.parse('$baseUrl/api/recycling/my-centre'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(centre.toJson()),
+        );
+      } catch (_) {
+        // Local fallback
+      }
+    }
+
+    final index = _centres.indexWhere((c) => c.id == centre.id);
+    if (index >= 0) {
+      _centres[index] = centre;
+    } else {
+      _centres.add(centre);
+    }
+  }
+
+  Future<void> toggleCentreStatus(String centreId, bool isOpen) async {
+    final token = await _authService.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await http.patch(
+          Uri.parse('$baseUrl/api/recycling/my-centre/status'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'isOpen': isOpen}),
+        );
+      } catch (_) {
+        // Local fallback
+      }
+    }
+
+    final index = _centres.indexWhere((c) => c.id == centreId);
+    if (index >= 0) {
+      _centres[index] = _centres[index].copyWith(isOpen: isOpen);
+    }
+  }
+
+  Future<void> updateAcceptedMaterials(String centreId, List<String> materials) async {
+    final index = _centres.indexWhere((c) => c.id == centreId);
+    if (index >= 0) {
+      final updated = _centres[index].copyWith(acceptedMaterials: materials);
+      _centres[index] = updated;
+      await saveOrUpdateCentre(updated);
+    }
+  }
+
+  List<String> getMasterMaterialList() {
+    return [
+      'Plastic Bottles (PET #1)',
+      'Rigid Plastics (HDPE #2, PP #5)',
+      'Cardboard & Office Paper',
+      'Newspapers & Books',
+      'Aluminum Beverage Cans',
+      'Steel Food Tins',
+      'Glass Bottles & Jars',
+      'Mobile Phones & Tablets',
+      'Computers & Laptops',
+      'Batteries & Power Banks',
+      'Cables, Adapters & Small Appliances',
+      'Fruit & Vegetable Scraps',
+      'Garden Leaves & Yard Waste',
+      'Copper Wires & Brass Fittings',
+      'Old Metal Cookware',
+    ];
   }
 }
 
