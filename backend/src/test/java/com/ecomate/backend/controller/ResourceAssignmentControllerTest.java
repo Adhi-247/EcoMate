@@ -162,4 +162,33 @@ public class ResourceAssignmentControllerTest {
         assertEquals(EmployeeStatus.ON_DUTY, employeeRepository.findById(driver2.getId()).orElseThrow().getStatus());
         assertEquals(VehicleStatus.ON_DUTY, vehicleRepository.findById(vehicle2.getId()).orElseThrow().getStatus());
     }
+
+    @Test
+    public void testCompleteAssignment_Success() {
+        // Create assignment
+        AssignmentRequest request = new AssignmentRequest(
+                jobMorning.getId(),
+                vehicle1.getId(),
+                driver1.getId(),
+                List.of(collector1.getId())
+        );
+
+        ResourceAssignmentDto dto = assignmentService.createAssignment(request, "admin@ecomate.com");
+        Long assignmentId = dto.id();
+
+        // Complete assignment
+        assignmentService.completeAssignment(assignmentId);
+
+        // Verify assignment status is COMPLETED
+        ResourceAssignment completed = assignmentRepository.findById(assignmentId).orElseThrow();
+        assertEquals(AssignmentStatus.COMPLETED, completed.getStatus());
+
+        // Verify resources are AVAILABLE again
+        assertEquals(EmployeeStatus.AVAILABLE, employeeRepository.findById(driver1.getId()).orElseThrow().getStatus());
+        assertEquals(EmployeeStatus.AVAILABLE, employeeRepository.findById(collector1.getId()).orElseThrow().getStatus());
+        assertEquals(VehicleStatus.AVAILABLE, vehicleRepository.findById(vehicle1.getId()).orElseThrow().getStatus());
+
+        // Verify job status is COMPLETED
+        assertEquals("COMPLETED", jobRepository.findById(jobMorning.getId()).orElseThrow().getStatus());
+    }
 }

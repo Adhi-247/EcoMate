@@ -141,4 +141,10 @@ public class MunicipalOperationsController {
         assignmentService.cancelAssignment(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/assignments/{id}/complete")
+    public ResponseEntity<Void> completeAssignment(@PathVariable Long id) {
+        assignmentService.completeAssignment(id);
+        return ResponseEntity.noContent().build();
+    }
 }

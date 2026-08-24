@@ -297,6 +297,32 @@ public class ResourceAssignmentService {
         }
     }
 
+    public void completeAssignment(Long id) {
+        ResourceAssignment assignment = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assignment not found with id " + id));
+
+        assignment.setStatus(AssignmentStatus.COMPLETED);
+        repository.save(assignment);
+
+        // Reset statuses of resources to AVAILABLE
+        CollectorDriver driver = assignment.getDriver();
+        driver.setStatus(EmployeeStatus.AVAILABLE);
+        employeeRepository.save(driver);
+
+        Vehicle vehicle = assignment.getVehicle();
+        vehicle.setStatus(VehicleStatus.AVAILABLE);
+        vehicleRepository.save(vehicle);
+
+        for (CollectorDriver col : assignment.getCollectors()) {
+            col.setStatus(EmployeeStatus.AVAILABLE);
+            employeeRepository.save(col);
+        }
+
+        CollectionJob job = assignment.getJob();
+        job.setStatus("COMPLETED");
+        jobRepository.save(job);
+    }
+
     public ResourceAssignmentDto toDto(ResourceAssignment entity) {
         List<CollectorDriverDto> colDtos = entity.getCollectors().stream()
                 .map(employeeService::toDto)

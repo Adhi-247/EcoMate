@@ -248,6 +248,18 @@ class OperationsService {
     }
   }
 
+  Future<void> completeAssignment(int id) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/municipal/assignments/$id/complete'),
+      headers: headers,
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to complete assignment: ${response.statusCode} - ${response.body}');
+    }
+  }
+
   // ================= Notifications APIs =================
 
   Future<List<NotificationModel>> getNotifications(String employeeId) async {

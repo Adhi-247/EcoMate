@@ -152,6 +152,30 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Assignment execution date and time
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: MunicipalColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: MunicipalColors.border),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined, size: 16, color: MunicipalColors.secondaryGreen),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Assignment Timestamp: ',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: MunicipalColors.secondaryText),
+                                ),
+                                Text(
+                                  DateTime.now().toLocal().toString().substring(0, 16),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: MunicipalColors.primaryText),
+                                ),
+                              ],
+                            ),
+                          ),
                           // Select Driver
                           const Text(
                             'Select Driver (Choose 1)',
@@ -366,6 +390,148 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
     }
   }
 
+  Future<void> _completeAssignment(ResourceAssignment assignment) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Assignment?'),
+        content: Text('Are you sure you want to mark Route ${assignment.job.routeId} assignment as completed? This will set all assigned resources (driver, vehicle, collectors) back to Available status.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Complete', style: TextStyle(color: MunicipalColors.secondaryGreen)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      try {
+        await _apiService.completeAssignment(assignment.id!);
+        _showSnackBar('Assignment marked as completed.', Colors.green);
+        _loadData();
+      } catch (e) {
+        setState(() => _isLoading = false);
+        _showErrorDialog(e.toString().replaceAll('Exception:', '').trim());
+      }
+    }
+  }
+
+  void _showDetailsDialog(ResourceAssignment assignment) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: MunicipalColors.secondaryGreen),
+            const SizedBox(width: 8),
+            Text('Route ${assignment.job.routeId} Details'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                assignment.job.title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MunicipalColors.primaryText),
+              ),
+              if (assignment.job.description != null && assignment.job.description!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  assignment.job.description!,
+                  style: const TextStyle(fontSize: 13, color: MunicipalColors.secondaryText),
+                ),
+              ],
+              const Divider(height: 24),
+              _buildDetailRow('Status', assignment.status, isBadge: true),
+              _buildDetailRow('Zone', assignment.job.zone),
+              _buildDetailRow('Scheduled Time', _formatDateTimeRange(assignment.job.startTime, assignment.job.endTime)),
+              _buildDetailRow('Assignment Date', assignment.assignmentDate.toLocal().toString().substring(0, 16)),
+              const Divider(height: 24),
+              const Text('ASSIGNED RESOURCES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: MunicipalColors.secondaryText, letterSpacing: 1.1)),
+              const SizedBox(height: 12),
+              _buildResourceRow(Icons.person_rounded, 'Driver', '${assignment.driver.name} (${assignment.driver.employeeId})', 'Phone: ${assignment.driver.phone}'),
+              const SizedBox(height: 12),
+              _buildResourceRow(Icons.local_shipping_rounded, 'Vehicle', assignment.vehicle.registrationNumber, '${assignment.vehicle.vehicleType} (Capacity: ${assignment.vehicle.capacity}T)'),
+              const SizedBox(height: 12),
+              _buildResourceRow(
+                Icons.people_rounded, 
+                'Collectors', 
+                assignment.collectors.map((c) => c.name).join(', '), 
+                assignment.collectors.map((c) => c.employeeId).join(', ')
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: MunicipalColors.secondaryGreen, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isBadge = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: MunicipalColors.secondaryText, fontSize: 13)),
+          if (isBadge)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: (value.toUpperCase() == 'COMPLETED' ? Colors.green : (value.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen)).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 11, 
+                  fontWeight: FontWeight.bold, 
+                  color: value.toUpperCase() == 'COMPLETED' ? Colors.green : (value.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen)
+                ),
+              ),
+            )
+          else
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: MunicipalColors.primaryText)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResourceRow(IconData icon, String title, String name, String subtitle) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: MunicipalColors.secondaryGreen),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: MunicipalColors.secondaryText)),
+              const SizedBox(height: 2),
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: MunicipalColors.primaryText)),
+              Text(subtitle, style: const TextStyle(fontSize: 12, color: MunicipalColors.secondaryText)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   String _formatDateTimeRange(DateTime start, DateTime end) {
     final startStr = '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
     final endStr = '${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
@@ -514,7 +680,9 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                 )
               else
                 ..._assignments.map((assignment) {
-                  final activeColors = assignment.status.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen;
+                  final activeColors = assignment.status.toUpperCase() == 'COMPLETED'
+                      ? Colors.green
+                      : (assignment.status.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen);
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -609,38 +777,64 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                             ],
                           ),
                           
-                          if (assignment.status.toUpperCase() != 'CANCELLED') ...[
-                            const Divider(height: 24),
-                            // Reassign / Cancel buttons
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                          const Divider(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.red),
-                                    foregroundColor: Colors.red,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    side: const BorderSide(color: MunicipalColors.secondaryGreen),
+                                    foregroundColor: MunicipalColors.secondaryGreen,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
-                                  onPressed: () => _cancelAssignment(assignment),
-                                  icon: const Icon(Icons.cancel_outlined, size: 16),
-                                  label: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                                  onPressed: () => _showDetailsDialog(assignment),
+                                  icon: const Icon(Icons.info_outline_rounded, size: 16),
+                                  label: const Text('Details', style: TextStyle(fontSize: 12)),
                                 ),
-                                const SizedBox(width: 12),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: MunicipalColors.secondaryGreen,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                if (assignment.status.toUpperCase() != 'CANCELLED' && assignment.status.toUpperCase() != 'COMPLETED') ...[
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Colors.red),
+                                      foregroundColor: Colors.red,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () => _cancelAssignment(assignment),
+                                    icon: const Icon(Icons.cancel_outlined, size: 16),
+                                    label: const Text('Cancel', style: TextStyle(fontSize: 12)),
                                   ),
-                                  onPressed: () => _showAssignmentDialog(assignment: assignment),
-                                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                                  label: const Text('Reassign', style: TextStyle(fontSize: 12)),
-                                ),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: MunicipalColors.secondaryGreen,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () => _showAssignmentDialog(assignment: assignment),
+                                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                                    label: const Text('Reassign', style: TextStyle(fontSize: 12)),
+                                  ),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green.shade600,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () => _completeAssignment(assignment),
+                                    icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                                    label: const Text('Complete', style: TextStyle(fontSize: 12)),
+                                  ),
+                                ],
                               ],
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
