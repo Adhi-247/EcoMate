@@ -54,18 +54,18 @@ class _WasteSegregationGuideScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071D20),
+      backgroundColor: const Color(0xFFF8FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B2528),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF68E1BF)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F5520), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Waste Segregation Guide',
           style: TextStyle(
-            color: Colors.white,
+            color: Color(0xFF1F5520),
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -80,26 +80,26 @@ class _WasteSegregationGuideScreenState
                 // Top Search & Filter Bar
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                  color: const Color(0xFF0B2528),
+                  color: Colors.white,
                   child: Column(
                     children: [
                       // Search Input
                       TextField(
                         controller: _searchController,
                         onChanged: _onSearchChanged,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Color(0xFF2D3748)),
                         decoration: InputDecoration(
                           hintText: 'Search waste (e.g. bottle, battery, paper)...',
-                          hintStyle: const TextStyle(color: Color(0xFF6B8A86)),
+                          hintStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 14),
                           prefixIcon: const Icon(
                             Icons.search_rounded,
-                            color: Color(0xFF68E1BF),
+                            color: Color(0xFF2E7D32),
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(
                                     Icons.clear,
-                                    color: Color(0xFF9AB5B1),
+                                    color: Colors.grey,
                                   ),
                                   onPressed: () {
                                     _searchController.clear();
@@ -108,23 +108,23 @@ class _WasteSegregationGuideScreenState
                                 )
                               : null,
                           filled: true,
-                          fillColor: const Color(0xFF102D2F),
+                          fillColor: const Color(0xFFF8FAF7),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFF1A4648)),
+                            borderSide: const BorderSide(color: Color(0xFFD9E3DA)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFF1A4648)),
+                            borderSide: const BorderSide(color: Color(0xFFD9E3DA)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
-                              color: Color(0xFF68E1BF),
+                              color: Color(0xFF2E7D32),
                               width: 1.5,
                             ),
                           ),
@@ -147,6 +147,8 @@ class _WasteSegregationGuideScreenState
                   ),
                 ),
 
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
+
                 // Category List
                 Expanded(
                   child: _displayedCategories.isEmpty
@@ -157,13 +159,13 @@ class _WasteSegregationGuideScreenState
                               Icon(
                                 Icons.search_off_rounded,
                                 size: 56,
-                                color: const Color(0xFF68E1BF).withValues(alpha: 0.5),
+                                color: Colors.grey.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: 12),
                               const Text(
                                 'No matching waste categories found',
                                 style: TextStyle(
-                                  color: Color(0xFF9AB5B1),
+                                  color: Color(0xFF69756D),
                                   fontSize: 16,
                                 ),
                               ),
@@ -189,29 +191,24 @@ class _WasteSegregationGuideScreenState
 
   Widget _buildFilterChip(String label) {
     final isSelected = _selectedFilter == label;
-    return InkWell(
-      onTap: () => _onFilterChanged(label),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF68E1BF)
-              : const Color(0xFF102D2F),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF68E1BF) : const Color(0xFF1E4C4E),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? const Color(0xFF071D20) : const Color(0xFFB4CCC9),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            fontSize: 13,
-          ),
-        ),
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => _onFilterChanged(label),
+      selectedColor: const Color(0xFF1F5520),
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: isSelected ? const Color(0xFF1F5520) : const Color(0xFFD9E3DA),
       ),
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : const Color(0xFF69756D),
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 13,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      showCheckmark: false,
     );
   }
 
@@ -219,9 +216,16 @@ class _WasteSegregationGuideScreenState
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B2528),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF163D3F)),
+        border: Border.all(color: const Color(0xFFD9E3DA)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -240,16 +244,14 @@ class _WasteSegregationGuideScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Top Row: Icon + Name + Recyclable Badge
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: category.binColor.withValues(alpha: 0.15),
+                        color: category.binColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: category.binColor.withValues(alpha: 0.4),
-                        ),
                       ),
                       child: Icon(
                         category.icon,
@@ -265,8 +267,8 @@ class _WasteSegregationGuideScreenState
                           Text(
                             category.name,
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
+                              color: Color(0xFF1F5520),
+                              fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -277,17 +279,17 @@ class _WasteSegregationGuideScreenState
                                 width: 10,
                                 height: 10,
                                 decoration: BoxDecoration(
-                                  color: category.binColor,
                                   shape: BoxShape.circle,
+                                  color: category.binColor,
                                 ),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 category.binColorName,
-                                style: TextStyle(
-                                  color: category.binColor,
+                                style: const TextStyle(
+                                  color: Color(0xFF69756D),
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -295,49 +297,92 @@ class _WasteSegregationGuideScreenState
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: Color(0xFF68E1BF),
-                      size: 16,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: category.isRecyclable
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        category.isRecyclable ? 'Recyclable' : 'Special Disposal',
+                        style: TextStyle(
+                          color: category.isRecyclable
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFC62828),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
+
+                // Description
                 Text(
                   category.description,
                   style: const TextStyle(
-                    color: Color(0xFF9AB5B1),
+                    color: Color(0xFF69756D),
                     fontSize: 13,
                     height: 1.4,
                   ),
                 ),
+
                 const SizedBox(height: 14),
-                // Chips for examples
+
+                // Common items chips preview
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: category.commonItems.take(3).map((item) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
+                        horizontal: 10,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF102D2F),
+                        color: const Color(0xFFF8FAF7),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFF1E4C4E),
-                        ),
+                        border: Border.all(color: const Color(0xFFD9E3DA)),
                       ),
                       child: Text(
                         item,
                         style: const TextStyle(
-                          color: Color(0xFFC7DFDC),
-                          fontSize: 11,
+                          color: Color(0xFF2D3748),
+                          fontSize: 12,
                         ),
                       ),
                     );
                   }).toList(),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Footer: Tap to view details link
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'View Preparation Rules',
+                      style: TextStyle(
+                        color: Color(0xFF2E7D32),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFF2E7D32),
+                      size: 13,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -347,4 +392,3 @@ class _WasteSegregationGuideScreenState
     );
   }
 }
-

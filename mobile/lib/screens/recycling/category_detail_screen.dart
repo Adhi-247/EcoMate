@@ -12,18 +12,18 @@ class CategoryDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071D20),
+      backgroundColor: const Color(0xFFF8FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B2528),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF68E1BF)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F5520), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           category.name,
           style: const TextStyle(
-            color: Colors.white,
+            color: Color(0xFF1F5520),
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -33,7 +33,7 @@ class CategoryDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+            constraints: const BoxConstraints(maxWidth: 750),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -41,21 +41,24 @@ class CategoryDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0B2528),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF163D3F)),
+                    border: Border.all(color: const Color(0xFFD9E3DA)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: category.binColor.withValues(alpha: 0.18),
+                          color: category.binColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: category.binColor.withValues(alpha: 0.5),
-                            width: 1.5,
-                          ),
                         ),
                         child: Icon(
                           category.icon,
@@ -71,7 +74,7 @@ class CategoryDetailScreen extends StatelessWidget {
                             Text(
                               category.name,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFF1F5520),
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -83,11 +86,8 @@ class CategoryDetailScreen extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: category.binColor.withValues(alpha: 0.15),
+                                color: category.binColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: category.binColor.withValues(alpha: 0.4),
-                                ),
                               ),
                               child: Text(
                                 'Bin: ${category.binColorName}',
@@ -107,120 +107,32 @@ class CategoryDetailScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Description
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0E2F32),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF1B484A)),
-                  ),
-                  child: Text(
-                    category.description,
-                    style: const TextStyle(
-                      color: Color(0xFFB4CCC9),
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Common Examples Section
-                _buildSectionHeader(
-                  title: 'Common Waste Examples',
+                // Common Items Section
+                _buildSectionCard(
+                  title: 'Common Items in This Category',
                   icon: Icons.checklist_rounded,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: category.commonItems.map((item) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF103337),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1C4D52)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle_outline_rounded,
-                            color: category.binColor,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            item,
-                            style: const TextStyle(
-                              color: Color(0xFFD6EBE7),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 28),
-
-                // Step-by-Step Preparation
-                _buildSectionHeader(
-                  title: 'How to Prepare & Separate',
-                  icon: Icons.format_list_numbered_rounded,
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0B2528),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF163D3F)),
-                  ),
+                  accentColor: const Color(0xFF1F5520),
                   child: Column(
-                    children: List.generate(category.preparationSteps.length, (i) {
-                      final step = category.preparationSteps[i];
+                    children: category.commonItems.map((item) {
                       return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: i < category.preparationSteps.length - 1 ? 14 : 0,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 28,
-                              height: 28,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF68E1BF).withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF68E1BF),
-                                ),
-                              ),
-                              child: Text(
-                                '${i + 1}',
-                                style: const TextStyle(
-                                  color: Color(0xFF68E1BF),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: Color(0xFF2E7D32),
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                step,
+                                item,
                                 style: const TextStyle(
-                                  color: Color(0xFFC7DFDC),
+                                  color: Color(0xFF2D3748),
                                   fontSize: 14,
                                   height: 1.4,
                                 ),
@@ -229,107 +141,187 @@ class CategoryDetailScreen extends StatelessWidget {
                           ],
                         ),
                       );
-                    }),
+                    }).toList(),
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
-                // Dos & Don'ts
-                _buildSectionHeader(
-                  title: 'Disposal Best Practices',
-                  icon: Icons.thumb_up_alt_outlined,
+                // Step-by-Step Preparation Guide
+                _buildSectionCard(
+                  title: 'How to Prepare Before Disposal',
+                  icon: Icons.cleaning_services_rounded,
+                  accentColor: const Color(0xFF1976D2),
+                  child: Column(
+                    children: category.preparationSteps.asMap().entries.map((entry) {
+                      final stepNum = entry.key + 1;
+                      final stepText = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 26,
+                              height: 26,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE3F2FD),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '$stepNum',
+                                style: const TextStyle(
+                                  color: Color(0xFF1976D2),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                stepText,
+                                style: const TextStyle(
+                                  color: Color(0xFF2D3748),
+                                  fontSize: 14,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // DOs
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
+
+                const SizedBox(height: 20),
+
+                // Do's and Don'ts Side-by-Side / Stacked
+                _buildSectionCard(
+                  title: 'Do\'s and Don\'ts',
+                  icon: Icons.rule_rounded,
+                  accentColor: const Color(0xFF2E7D32),
+                  child: Column(
+                    children: [
+                      // Do's
+                      Container(
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0B2E26),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF135B49)),
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFC8E6C9)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Color(0xFF2E7D32),
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'DO',
                                   style: TextStyle(
-                                    color: Color(0xFF34D399),
+                                    color: Color(0xFF2E7D32),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            ...category.dos.map((d) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                '• $d',
-                                style: const TextStyle(
-                                  color: Color(0xFFA7F3D0),
-                                  fontSize: 13,
-                                  height: 1.4,
-                                ),
-                              ),
-                            )),
+                            const SizedBox(height: 8),
+                            ...category.dos.map((item) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.check,
+                                        size: 16,
+                                        color: Color(0xFF2E7D32),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          item,
+                                          style: const TextStyle(
+                                            color: Color(0xFF1B5E20),
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    // DON'Ts
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
+
+                      const SizedBox(height: 14),
+
+                      // Don'ts
+                      Container(
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF33151E),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF6B2135)),
+                          color: const Color(0xFFFFEBEE),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFFCDD2)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.cancel_rounded, color: Color(0xFFEF4444), size: 20),
+                                Icon(
+                                  Icons.cancel_rounded,
+                                  color: Color(0xFFC62828),
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'DON\'T',
                                   style: TextStyle(
-                                    color: Color(0xFFF87171),
+                                    color: Color(0xFFC62828),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            ...category.donts.map((dont) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                '• $dont',
-                                style: const TextStyle(
-                                  color: Color(0xFFFECACA),
-                                  fontSize: 13,
-                                  height: 1.4,
-                                ),
-                              ),
-                            )),
+                            const SizedBox(height: 8),
+                            ...category.donts.map((item) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Color(0xFFC62828),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          item,
+                                          style: const TextStyle(
+                                            color: Color(0xFFB71C1C),
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -339,21 +331,47 @@ class CategoryDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader({required String title, required IconData icon}) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFF68E1BF), size: 20),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required Color accentColor,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD9E3DA)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: accentColor, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24, color: Color(0xFFECEFF1)),
+          child,
+        ],
+      ),
     );
   }
 }
-

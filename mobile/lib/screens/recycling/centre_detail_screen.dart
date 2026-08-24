@@ -12,18 +12,18 @@ class CentreDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071D20),
+      backgroundColor: const Color(0xFFF8FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B2528),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF68E1BF)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F5520), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           centre.name,
           style: const TextStyle(
-            color: Colors.white,
+            color: Color(0xFF1F5520),
             fontWeight: FontWeight.bold,
             fontSize: 19,
           ),
@@ -41,9 +41,16 @@ class CentreDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0B2528),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF163D3F)),
+                    border: Border.all(color: const Color(0xFFD9E3DA)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,15 +61,12 @@ class CentreDetailScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF68E1BF).withValues(alpha: 0.15),
+                              color: const Color(0xFFE8F5E9),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFF68E1BF).withValues(alpha: 0.3),
-                              ),
                             ),
                             child: const Icon(
                               Icons.storefront_rounded,
-                              color: Color(0xFF68E1BF),
+                              color: Color(0xFF2E7D32),
                               size: 32,
                             ),
                           ),
@@ -74,7 +78,7 @@ class CentreDetailScreen extends StatelessWidget {
                                 Text(
                                   centre.name,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: Color(0xFF1F5520),
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -89,44 +93,39 @@ class CentreDetailScreen extends StatelessWidget {
                                       ),
                                       decoration: BoxDecoration(
                                         color: centre.isOpen
-                                            ? const Color(0xFF0B2E26)
-                                            : const Color(0xFF33151E),
+                                            ? const Color(0xFFE8F5E9)
+                                            : const Color(0xFFFFEBEE),
                                         borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: centre.isOpen
-                                              ? const Color(0xFF10B981)
-                                              : const Color(0xFFEF4444),
-                                        ),
                                       ),
                                       child: Text(
-                                        centre.isOpen ? 'OPEN NOW' : 'CLOSED',
+                                        centre.isOpen ? 'OPEN FOR DROP-OFFS' : 'CLOSED',
                                         style: TextStyle(
                                           color: centre.isOpen
-                                              ? const Color(0xFF34D399)
-                                              : const Color(0xFFF87171),
+                                              ? const Color(0xFF2E7D32)
+                                              : const Color(0xFFC62828),
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF102D2F),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        '${centre.distanceKm} km away',
-                                        style: const TextStyle(
-                                          color: Color(0xFF68E1BF),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.directions_walk_rounded,
+                                          size: 14,
+                                          color: Color(0xFF1976D2),
                                         ),
-                                      ),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          '${centre.distanceKm} km away',
+                                          style: const TextStyle(
+                                            color: Color(0xFF1976D2),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -135,142 +134,191 @@ class CentreDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 16),
-                      const Divider(color: Color(0xFF163D3F)),
+                      const SizedBox(height: 18),
+                      const Divider(color: Color(0xFFECEFF1)),
                       const SizedBox(height: 12),
-
-                      // Location
-                      _buildInfoRow(
-                        icon: Icons.location_on_rounded,
-                        label: 'Address',
-                        value: centre.address,
+                      _buildContactRow(
+                        Icons.location_on_outlined,
+                        '${centre.address}, ${centre.city}',
                       ),
-                      const SizedBox(height: 10),
-
-                      // Operating Hours
-                      _buildInfoRow(
-                        icon: Icons.access_time_filled_rounded,
-                        label: 'Hours',
-                        value: centre.operatingHours,
+                      const SizedBox(height: 8),
+                      _buildContactRow(
+                        Icons.access_time_outlined,
+                        centre.operatingHours,
                       ),
-                      const SizedBox(height: 10),
-
-                      // Phone
-                      _buildInfoRow(
-                        icon: Icons.phone_rounded,
-                        label: 'Phone',
-                        value: centre.contactNumber,
+                      const SizedBox(height: 8),
+                      _buildContactRow(
+                        Icons.phone_outlined,
+                        centre.contactNumber,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
+                      _buildContactRow(
+                        Icons.email_outlined,
+                        centre.email,
+                      ),
+                      if (centre.notes.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAF7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFD9E3DA)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: Color(0xFF2E7D32),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  centre.notes,
+                                  style: const TextStyle(
+                                    color: Color(0xFF69756D),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
 
-                      // Email
-                      _buildInfoRow(
-                        icon: Icons.email_rounded,
-                        label: 'Email',
-                        value: centre.email,
+                const SizedBox(height: 20),
+
+                // Accepted Materials Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFD9E3DA)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            color: Color(0xFF2E7D32),
+                            size: 22,
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            'Accepted Recyclable Materials',
+                            style: TextStyle(
+                              color: Color(0xFF1F5520),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24, color: Color(0xFFECEFF1)),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: centre.acceptedMaterials.map((mat) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFC8E6C9)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  mat,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1B5E20),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Accepted Materials (SCRUM-55)
-                _buildSectionHeader(
-                  title: 'Accepted Recyclable Materials',
-                  icon: Icons.check_circle_rounded,
-                  color: const Color(0xFF10B981),
-                ),
-                const SizedBox(height: 12),
+                // Unsupported / Rejected Materials Card
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0B2528),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF135B49)),
-                  ),
-                  child: Column(
-                    children: centre.acceptedMaterials.map((material) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF0B2E26),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check_rounded,
-                                color: Color(0xFF34D399),
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                material,
-                                style: const TextStyle(
-                                  color: Color(0xFFE2F3F0),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Unsupported Materials Warning Card (SCRUM-55)
-                _buildSectionHeader(
-                  title: 'Unsupported / Rejected Materials',
-                  icon: Icons.warning_rounded,
-                  color: const Color(0xFFEF4444),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF281116),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF5E1E28)),
+                    color: const Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFFFCDD2)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Please DO NOT bring the following items to this centre:',
-                        style: TextStyle(
-                          color: Color(0xFFFCA5A5),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.cancel_outlined,
+                            color: Color(0xFFC62828),
+                            size: 22,
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            'Strictly NOT Accepted',
+                            style: TextStyle(
+                              color: Color(0xFFC62828),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      ...centre.unsupportedMaterials.map((material) {
+                      const Divider(height: 24, color: Color(0xFFFFCDD2)),
+                      ...centre.unsupportedMaterials.map((mat) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.do_not_disturb_on_rounded,
-                                color: Color(0xFFEF4444),
+                                Icons.remove_circle_outline,
                                 size: 16,
+                                color: Color(0xFFD32F2F),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  material,
+                                  mat,
                                   style: const TextStyle(
-                                    color: Color(0xFFFECACA),
-                                    fontSize: 14,
+                                    color: Color(0xFFB71C1C),
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
@@ -281,34 +329,6 @@ class CentreDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Additional Notes
-                if (centre.notes.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    title: 'Centre Notes & Drop-off Policy',
-                    icon: Icons.info_outline_rounded,
-                    color: const Color(0xFF68E1BF),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E2F32),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF1B484A)),
-                    ),
-                    child: Text(
-                      centre.notes,
-                      style: const TextStyle(
-                        color: Color(0xFFC7DFDC),
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -317,60 +337,21 @@ class CentreDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
+  Widget _buildContactRow(IconData icon, String text) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF68E1BF), size: 18),
+        Icon(icon, size: 16, color: const Color(0xFF2E7D32)),
         const SizedBox(width: 10),
-        SizedBox(
-          width: 70,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF7A9E99),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
         Expanded(
           child: Text(
-            value,
+            text,
             style: const TextStyle(
-              color: Color(0xFFD8EBE8),
+              color: Color(0xFF69756D),
               fontSize: 13,
-              fontWeight: FontWeight.w500,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            color: color,
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ],
     );
   }
 }
-
