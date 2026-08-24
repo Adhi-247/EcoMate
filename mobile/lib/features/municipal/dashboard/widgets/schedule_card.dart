@@ -56,26 +56,26 @@ class ScheduleCard extends StatelessWidget {
                 ],
               ),
               TextButton(
-                onPressed: onViewAll,
+                onPressed: onViewFullSchedule,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
-                  "View all",
+                  "View Full Schedule",
                   style: TextStyle(
                     color: MunicipalColors.secondaryGreen,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Schedule List Timeline
+          // Schedule List
           if (schedules.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -86,166 +86,120 @@ class ScheduleCard extends StatelessWidget {
               ),
             )
           else
-            ListView.builder(
+            ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: schedules.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = schedules[index];
-                final isLast = index == schedules.length - 1;
-                final isInProgress = item.status.toLowerCase() == 'in progress';
+                final status = item.status.toLowerCase();
+                
+                // Color configuration based on status
+                Color dotColor;
+                Color badgeBg;
+                Color badgeText;
+                String displayStatus;
 
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Timeline Column
-                      Column(
+                if (status == 'in progress') {
+                  dotColor = const Color(0xFF22C55E); // Green
+                  badgeBg = const Color(0xFFDCFCE7);
+                  badgeText = const Color(0xFF15803D);
+                  displayStatus = "In Progress";
+                } else if (status == 'upcoming') {
+                  dotColor = const Color(0xFF3B82F6); // Blue
+                  badgeBg = const Color(0xFFDBEAFE);
+                  badgeText = const Color(0xFF1D4ED8);
+                  displayStatus = "Upcoming";
+                } else {
+                  dotColor = const Color(0xFF0D9488); // Teal for Scheduled
+                  badgeBg = const Color(0xFFF3F4F6);
+                  badgeText = const Color(0xFF4B5563);
+                  displayStatus = "Scheduled";
+                }
+
+                // Format time interval nicely
+                String timeInterval = item.time;
+                if (item.time == "06:00 AM") {
+                  timeInterval = "6:00 AM — 10:00 AM";
+                } else if (item.time == "10:00 AM") {
+                  timeInterval = "10:30 AM — 2:30 PM";
+                } else if (item.time == "02:00 PM") {
+                  timeInterval = "3:00 PM — 7:00 PM";
+                } else {
+                  timeInterval = "${item.time} — ${item.type}";
+                }
+
+                return Row(
+                  children: [
+                    // Dot Indicator
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+
+                    // Title & Time info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: isInProgress
-                                  ? MunicipalColors.secondaryGreen
-                                  : MunicipalColors.border,
-                              shape: BoxShape.circle,
+                          Text(
+                            item.zone,
+                            style: const TextStyle(
+                              color: MunicipalColors.primaryText,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (!isLast)
-                            Expanded(
-                              child: Container(
-                                width: 2,
-                                color: MunicipalColors.border,
-                              ),
+                          const SizedBox(height: 2),
+                          Text(
+                            timeInterval,
+                            style: const TextStyle(
+                              color: MunicipalColors.secondaryText,
+                              fontSize: 12,
                             ),
+                          ),
                         ],
                       ),
-                      const SizedBox(width: 16),
+                    ),
+                    const SizedBox(width: 8),
 
-                      // Time Display Box
-                      Container(
-                        width: 75,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isInProgress
-                              ? MunicipalColors.darkGreen
-                              : MunicipalColors.surface,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          item.time,
-                          style: TextStyle(
-                            color: isInProgress
-                                ? Colors.white
-                                : MunicipalColors.primaryText,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        displayStatus,
+                        style: TextStyle(
+                          color: badgeText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                    ),
+                    const SizedBox(width: 8),
 
-                      // Schedule Info Details
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.zone,
-                                      style: const TextStyle(
-                                        color: MunicipalColors.primaryText,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.type,
-                                      style: const TextStyle(
-                                        color: MunicipalColors.secondaryText,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // Status Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isInProgress
-                                      ? MunicipalColors.success.withValues(alpha: 0.15)
-                                      : MunicipalColors.info.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  item.status,
-                                  style: TextStyle(
-                                    color: isInProgress
-                                        ? MunicipalColors.success
-                                        : MunicipalColors.info,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    // Chevron Arrow
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: MunicipalColors.secondaryText,
+                      size: 20,
+                    ),
+                  ],
                 );
               },
             ),
-
-          const Divider(color: MunicipalColors.border, height: 24, thickness: 1),
-
-          // Bottom Action Navigation Button
-          InkWell(
-            onTap: onViewFullSchedule,
-            borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "View full schedule",
-                    style: TextStyle(
-                      color: MunicipalColors.secondaryGreen,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: MunicipalColors.secondaryGreen,
-                    size: 14,
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

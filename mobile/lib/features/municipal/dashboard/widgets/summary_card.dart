@@ -7,7 +7,7 @@ class SummaryCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color iconColor;
-  final Color iconBgColor;
+  final Color? backgroundColor;
   final Widget? comparisonWidget;
 
   const SummaryCard({
@@ -17,18 +17,23 @@ class SummaryCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.iconColor,
-    required this.iconBgColor,
+    this.backgroundColor,
     this.comparisonWidget,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: MunicipalColors.primaryBg,
+        color: backgroundColor ?? MunicipalColors.primaryBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MunicipalColors.border, width: 1),
+        border: Border.all(
+          color: backgroundColor != null 
+              ? iconColor.withValues(alpha: 0.1) 
+              : MunicipalColors.border, 
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -40,25 +45,25 @@ class SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Icon Container
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 24,
-                ),
-              ),
-            ],
+          // Loose Icon
+          Icon(
+            icon,
+            color: iconColor,
+            size: 28,
           ),
-          const SizedBox(height: 16),
+          const Spacer(),
+          // Value
+          Text(
+            value,
+            style: const TextStyle(
+              color: MunicipalColors.primaryText,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          // Title
           Text(
             title,
             style: const TextStyle(
@@ -66,19 +71,11 @@ class SummaryCard extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              color: MunicipalColors.primaryText,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           const SizedBox(height: 8),
+          // Trend / Comparison
           comparisonWidget ??
               Text(
                 subtitle,

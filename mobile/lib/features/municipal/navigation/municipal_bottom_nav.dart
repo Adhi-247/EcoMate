@@ -74,8 +74,8 @@ class _MunicipalBottomNavState extends State<MunicipalBottomNav> {
           elevation: 0,
           items: [
             const BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
               label: 'Dashboard',
             ),
             const BottomNavigationBarItem(
@@ -88,57 +88,9 @@ class _MunicipalBottomNavState extends State<MunicipalBottomNav> {
               activeIcon: Icon(Icons.calendar_today_rounded),
               label: 'Schedule',
             ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.assignment_outlined),
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: MunicipalColors.noticeGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              activeIcon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.assignment_rounded),
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: MunicipalColors.noticeGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart_rounded),
               label: 'Reports',
             ),
             const BottomNavigationBarItem(
