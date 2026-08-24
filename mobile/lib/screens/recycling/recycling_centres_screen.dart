@@ -51,18 +51,18 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071D20),
+      backgroundColor: const Color(0xFFF8FAF7),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B2528),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF68E1BF)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F5520), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Nearby Recycling Centres',
           style: TextStyle(
-            color: Colors.white,
+            color: Color(0xFF1F5520),
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -74,29 +74,29 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
             constraints: const BoxConstraints(maxWidth: 800),
             child: Column(
               children: [
-                // Top Search & Filter Container
+                // Search and Material Filter Bar
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                  color: const Color(0xFF0B2528),
+                  color: Colors.white,
                   child: Column(
                     children: [
-                      // Location/Centre Search Field
+                      // Search Input
                       TextField(
                         controller: _searchController,
                         onChanged: (_) => _fetchCentres(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Color(0xFF2D3748)),
                         decoration: InputDecoration(
-                          hintText: 'Search by centre name, city or location...',
-                          hintStyle: const TextStyle(color: Color(0xFF6B8A86)),
+                          hintText: 'Search by centre name, city, or address...',
+                          hintStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 14),
                           prefixIcon: const Icon(
-                            Icons.location_searching_rounded,
-                            color: Color(0xFF68E1BF),
+                            Icons.search_rounded,
+                            color: Color(0xFF2E7D32),
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(
                                     Icons.clear,
-                                    color: Color(0xFF9AB5B1),
+                                    color: Colors.grey,
                                   ),
                                   onPressed: () {
                                     _searchController.clear();
@@ -105,23 +105,23 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
                                 )
                               : null,
                           filled: true,
-                          fillColor: const Color(0xFF102D2F),
+                          fillColor: const Color(0xFFF8FAF7),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFF1A4648)),
+                            borderSide: const BorderSide(color: Color(0xFFD9E3DA)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Color(0xFF1A4648)),
+                            borderSide: const BorderSide(color: Color(0xFFD9E3DA)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
-                              color: Color(0xFF68E1BF),
+                              color: Color(0xFF2E7D32),
                               width: 1.5,
                             ),
                           ),
@@ -130,95 +130,55 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
 
                       const SizedBox(height: 12),
 
-                      // Horizontal Material Filter Chips
-                      SizedBox(
-                        height: 36,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _materialOptions.length,
-                          separatorBuilder: (context, index) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            final option = _materialOptions[index];
-                            final isSelected = _selectedMaterial == option;
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedMaterial = option;
-                                });
-                                _fetchCentres();
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
+                      // Material Horizontal Filter Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _materialOptions.map((mat) {
+                            final isSelected = _selectedMaterial == mat;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(mat),
+                                selected: isSelected,
+                                onSelected: (_) {
+                                  setState(() {
+                                    _selectedMaterial = mat;
+                                  });
+                                  _fetchCentres();
+                                },
+                                selectedColor: const Color(0xFF1F5520),
+                                backgroundColor: Colors.white,
+                                side: BorderSide(
                                   color: isSelected
-                                      ? const Color(0xFF68E1BF)
-                                      : const Color(0xFF102D2F),
+                                      ? const Color(0xFF1F5520)
+                                      : const Color(0xFFD9E3DA),
+                                ),
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF69756D),
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  fontSize: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF68E1BF)
-                                        : const Color(0xFF1E4C4E),
-                                  ),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    option,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? const Color(0xFF071D20)
-                                          : const Color(0xFFB4CCC9),
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
+                                showCheckmark: false,
                               ),
                             );
-                          },
+                          }).toList(),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Centres Count Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Found ${_displayedCentres.length} active centre${_displayedCentres.length == 1 ? '' : 's'}',
-                        style: const TextStyle(
-                          color: Color(0xFF9AB5B1),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Row(
-                        children: [
-                          Icon(Icons.near_me_rounded, color: Color(0xFF68E1BF), size: 14),
-                          SizedBox(width: 4),
-                          Text(
-                            'Sorted by distance',
-                            style: TextStyle(
-                              color: Color(0xFF68E1BF),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
 
-                // List of Centres
+                // Centres List
                 Expanded(
                   child: _displayedCentres.isEmpty
                       ? Center(
@@ -228,13 +188,13 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
                               Icon(
                                 Icons.location_off_rounded,
                                 size: 56,
-                                color: const Color(0xFF68E1BF).withValues(alpha: 0.5),
+                                color: Colors.grey.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: 12),
                               const Text(
-                                'No recycling centres match your criteria',
+                                'No recycling centres found matching your search',
                                 style: TextStyle(
-                                  color: Color(0xFF9AB5B1),
+                                  color: Color(0xFF69756D),
                                   fontSize: 16,
                                 ),
                               ),
@@ -262,9 +222,16 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B2528),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF163D3F)),
+        border: Border.all(color: const Color(0xFFD9E3DA)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -283,10 +250,23 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row: Name, distance badge, status badge
+                // Top Row: Name + Open/Closed Badge + Distance
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.store_mall_directory_rounded,
+                        color: Color(0xFF2E7D32),
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,36 +274,22 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
                           Text(
                             centre.name,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF1F5520),
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.place_rounded,
-                                color: Color(0xFF68E1BF),
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  centre.address,
-                                  style: const TextStyle(
-                                    color: Color(0xFF9AB5B1),
-                                    fontSize: 12,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            centre.address,
+                            style: const TextStyle(
+                              color: Color(0xFF69756D),
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -333,84 +299,102 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF102D2F),
+                            color: centre.isOpen
+                                ? const Color(0xFFE8F5E9)
+                                : const Color(0xFFFFEBEE),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(0xFF1A4648),
-                            ),
                           ),
                           child: Text(
-                            '${centre.distanceKm} km',
-                            style: const TextStyle(
-                              color: Color(0xFF68E1BF),
+                            centre.isOpen ? 'OPEN' : 'CLOSED',
+                            style: TextStyle(
+                              color: centre.isOpen
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFFC62828),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: centre.isOpen
-                                ? const Color(0xFF0B2E26)
-                                : const Color(0xFF33151E),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            centre.isOpen ? 'OPEN' : 'CLOSED',
-                            style: TextStyle(
-                              color: centre.isOpen
-                                  ? const Color(0xFF34D399)
-                                  : const Color(0xFFF87171),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.directions_walk_rounded,
+                              size: 14,
+                              color: Color(0xFF1976D2),
                             ),
-                          ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${centre.distanceKm} km',
+                              style: const TextStyle(
+                                color: Color(0xFF1976D2),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 12),
-                const Divider(color: Color(0xFF133639)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
 
-                // Accepted items preview tags
+                // Operating Hours Row
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Accepts: ',
-                      style: TextStyle(
-                        color: Color(0xFF6B8A86),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        centre.acceptedMaterials.take(3).join(', ') +
-                            (centre.acceptedMaterials.length > 3
-                                ? ' +${centre.acceptedMaterials.length - 3} more'
-                                : ''),
-                        style: const TextStyle(
-                          color: Color(0xFFC7DFDC),
-                          fontSize: 12,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                     const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: Color(0xFF68E1BF),
-                      size: 14,
+                      Icons.access_time_rounded,
+                      size: 15,
+                      color: Color(0xFF69756D),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      centre.operatingHours,
+                      style: const TextStyle(
+                        color: Color(0xFF69756D),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Accepted Materials Chips Preview
+                const Text(
+                  'Accepted Materials:',
+                  style: TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: centre.acceptedMaterials.take(4).map((mat) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFC8E6C9)),
+                      ),
+                      child: Text(
+                        mat,
+                        style: const TextStyle(
+                          color: Color(0xFF1B5E20),
+                          fontSize: 11,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
             ),
@@ -420,4 +404,3 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
     );
   }
 }
-
