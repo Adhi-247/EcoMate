@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
 import '../recycling/waste_segregation_guide_screen.dart';
+import '../collection_schedule_screen.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({super.key});
@@ -65,6 +66,18 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   }
 
   void _onBottomNavTap(int index) {
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              const CollectionScheduleScreen(),
+        ),
+      );
+
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -618,11 +631,18 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       childAspectRatio: 0.80,
       children: [
         _quickAction(
-          icon:
-              Icons.calendar_month_rounded,
+          icon: Icons.calendar_month_rounded,
           title: 'View\nSchedule',
           color: const Color(0xFF00624F),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    const CollectionScheduleScreen(),
+              ),
+            );
+          },
         ),
 
         _quickAction(
