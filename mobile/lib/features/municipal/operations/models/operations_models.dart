@@ -57,6 +57,7 @@ class Vehicle {
   final double capacity;
   final String status; // AVAILABLE, ON_DUTY, MAINTENANCE, INACTIVE
   final DateTime? lastServiceDate;
+  final DateTime? nextServiceDate;
   final bool active;
 
   Vehicle({
@@ -66,6 +67,7 @@ class Vehicle {
     required this.capacity,
     required this.status,
     this.lastServiceDate,
+    this.nextServiceDate,
     required this.active,
   });
 
@@ -79,6 +81,9 @@ class Vehicle {
       lastServiceDate: json['lastServiceDate'] != null
           ? DateTime.parse(json['lastServiceDate'] as String)
           : null,
+      nextServiceDate: json['nextServiceDate'] != null
+          ? DateTime.parse(json['nextServiceDate'] as String)
+          : null,
       active: json['active'] as bool? ?? true,
     );
   }
@@ -91,6 +96,7 @@ class Vehicle {
       'capacity': capacity,
       'status': status,
       'lastServiceDate': lastServiceDate?.toIso8601String().substring(0, 10),
+      'nextServiceDate': nextServiceDate?.toIso8601String().substring(0, 10),
       'active': active,
     };
   }

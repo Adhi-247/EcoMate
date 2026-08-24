@@ -30,6 +30,9 @@ public class Vehicle {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "next_service_date")
+    private LocalDate nextServiceDate;
+
     public Vehicle() {
     }
 
@@ -96,5 +99,13 @@ public class Vehicle {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public LocalDate getNextServiceDate() {
+        return nextServiceDate;
+    }
+
+    public void setNextServiceDate(LocalDate nextServiceDate) {
+        this.nextServiceDate = nextServiceDate;
     }
 }

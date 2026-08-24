@@ -9,5 +9,6 @@ public record VehicleDto(
     Double capacity,
     String status,
     LocalDate lastServiceDate,
+    LocalDate nextServiceDate,
     boolean active
 ) {}

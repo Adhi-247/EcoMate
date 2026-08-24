@@ -147,4 +147,14 @@ public class MunicipalOperationsController {
         assignmentService.completeAssignment(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/employees/{id}/assigned")
+    public ResponseEntity<Boolean> isEmployeeAssigned(@PathVariable Long id) {
+        return ResponseEntity.ok(assignmentService.isEmployeeAssigned(id));
+    }
+
+    @GetMapping("/vehicles/{id}/assigned")
+    public ResponseEntity<Boolean> isVehicleAssigned(@PathVariable Long id) {
+        return ResponseEntity.ok(assignmentService.isVehicleAssigned(id));
+    }
 }

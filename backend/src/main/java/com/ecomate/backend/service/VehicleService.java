@@ -74,6 +74,7 @@ public class VehicleService {
         entity.setCapacity(dto.capacity());
         entity.setStatus(VehicleStatus.valueOf(dto.status().toUpperCase().replace(" ", "_")));
         entity.setLastServiceDate(dto.lastServiceDate());
+        entity.setNextServiceDate(dto.nextServiceDate());
         entity.setActive(dto.active());
     }
 
@@ -85,6 +86,7 @@ public class VehicleService {
             entity.getCapacity(),
             entity.getStatus().name(),
             entity.getLastServiceDate(),
+            entity.getNextServiceDate(),
             entity.isActive()
         );
     }

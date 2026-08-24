@@ -323,6 +323,17 @@ public class ResourceAssignmentService {
         jobRepository.save(job);
     }
 
+    public boolean isEmployeeAssigned(Long employeeId) {
+        List<AssignmentStatus> activeStatuses = List.of(AssignmentStatus.ASSIGNED, AssignmentStatus.IN_PROGRESS);
+        return repository.existsByDriverIdAndStatusIn(employeeId, activeStatuses) ||
+               repository.existsByCollectorsIdAndStatusIn(employeeId, activeStatuses);
+    }
+
+    public boolean isVehicleAssigned(Long vehicleId) {
+        List<AssignmentStatus> activeStatuses = List.of(AssignmentStatus.ASSIGNED, AssignmentStatus.IN_PROGRESS);
+        return repository.existsByVehicleIdAndStatusIn(vehicleId, activeStatuses);
+    }
+
     public ResourceAssignmentDto toDto(ResourceAssignment entity) {
         List<CollectorDriverDto> colDtos = entity.getCollectors().stream()
                 .map(employeeService::toDto)

@@ -260,6 +260,34 @@ class OperationsService {
     }
   }
 
+  Future<bool> isEmployeeAssigned(int id) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/municipal/employees/$id/assigned'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as bool;
+    } else {
+      throw Exception('Failed to check employee assignment status: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  Future<bool> isVehicleAssigned(int id) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/municipal/vehicles/$id/assigned'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as bool;
+    } else {
+      throw Exception('Failed to check vehicle assignment status: ${response.statusCode} - ${response.body}');
+    }
+  }
+
   // ================= Notifications APIs =================
 
   Future<List<NotificationModel>> getNotifications(String employeeId) async {

@@ -16,6 +16,36 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
   bool _isLoading = true;
   String _errorMessage = '';
 
+  String _searchQuery = '';
+  String _filterType = 'ALL';
+  String _filterAvailability = 'ALL';
+  String _filterActive = 'ALL';
+
+  Widget _buildFilterDropdown({
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: MunicipalColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          style: const TextStyle(fontSize: 12, color: MunicipalColors.primaryText, fontWeight: FontWeight.w500),
+          icon: const Icon(Icons.arrow_drop_down, size: 18),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +81,7 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
     String selectedType = vehicle?.vehicleType ?? 'Compactor';
     String selectedStatus = vehicle?.status ?? 'AVAILABLE';
     DateTime selectedServiceDate = vehicle?.lastServiceDate ?? DateTime.now();
+    DateTime? selectedNextServiceDate = vehicle?.nextServiceDate;
     bool isActive = vehicle?.active ?? true;
 
     showModalBottomSheet(
@@ -137,8 +168,12 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter capacity';
                           }
-                          if (double.tryParse(value) == null) {
+                          final val = double.tryParse(value);
+                          if (val == null) {
                             return 'Capacity must be a number';
+                          }
+                          if (val <= 0) {
+                            return 'Capacity must be greater than zero';
                           }
                           return null;
                         },
@@ -235,6 +270,67 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
                         ),
                       ),
 
+                      // Next Service Date Datepicker (Optional)
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedNextServiceDate ?? DateTime.now().add(const Duration(days: 30)),
+                            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                            lastDate: DateTime.now().add(const Duration(days: 1000)),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: MunicipalColors.secondaryGreen,
+                                    onPrimary: Colors.white,
+                                    onSurface: MunicipalColors.primaryText,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setModalState(() => selectedNextServiceDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                selectedNextServiceDate == null
+                                    ? 'Next Service Due (Optional)'
+                                    : 'Next Service Due: ${selectedNextServiceDate!.toLocal().toString().split(' ')[0]}',
+                                style: TextStyle(
+                                  fontSize: 16, 
+                                  color: selectedNextServiceDate == null ? MunicipalColors.secondaryText : MunicipalColors.primaryText
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  if (selectedNextServiceDate != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear_rounded, color: Colors.red, size: 20),
+                                      onPressed: () {
+                                        setModalState(() => selectedNextServiceDate = null);
+                                      },
+                                    ),
+                                  const Icon(Icons.calendar_today_outlined, color: MunicipalColors.secondaryGreen),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                       if (isEditing) ...[
                         const SizedBox(height: 16),
                         SwitchListTile(
@@ -269,9 +365,43 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
                                 capacity: double.parse(capacityController.text),
                                 status: selectedStatus,
                                 lastServiceDate: selectedServiceDate,
+                                nextServiceDate: selectedNextServiceDate,
                                 active: isActive,
                               );
 
+                              if (isEditing) {
+                                final wasActive = vehicle.active;
+                                final wasAvailable = vehicle.status.toUpperCase() == 'AVAILABLE' || vehicle.status.toUpperCase() == 'ON_DUTY';
+                                final nextActive = isActive;
+                                final nextAvailable = selectedStatus.toUpperCase() == 'AVAILABLE' || selectedStatus.toUpperCase() == 'ON_DUTY';
+
+                                 if ((wasActive && !nextActive) || (wasAvailable && !nextAvailable)) {
+                                  final isAssigned = await _apiService.isVehicleAssigned(vehicle.id!);
+                                  if (!context.mounted) return;
+                                  if (isAssigned) {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Confirm Vehicle Status Change'),
+                                        content: Text('Are you sure you want to set vehicle ${vehicle.registrationNumber} as unavailable? It is currently assigned to an active route.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text('No'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: const Text('Yes, Save Changes', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm != true) return;
+                                  }
+                                }
+                              }
+
+                              if (!context.mounted) return;
                               Navigator.pop(context);
 
                               setState(() => _isLoading = true);
@@ -337,12 +467,38 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
   }
 
   Future<void> _toggleVehicleStatus(Vehicle vehicle) async {
-    setState(() => _isLoading = true);
     try {
       if (vehicle.active) {
+        // Check if assigned to an active route
+        final isAssigned = await _apiService.isVehicleAssigned(vehicle.id!);
+        if (!mounted) return;
+        if (isAssigned) {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Confirm Deactivation'),
+              content: Text('Are you sure you want to deactivate vehicle ${vehicle.registrationNumber}? It is currently assigned to an active route. Deactivating will not cancel the route.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('No'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Yes, Deactivate', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+          );
+          if (confirm != true) return;
+        }
+
+        setState(() => _isLoading = true);
         await _apiService.deactivateVehicle(vehicle.id!);
+        if (!mounted) return;
         _showSnackBar('${vehicle.registrationNumber} deactivated.', Colors.orange);
       } else {
+        setState(() => _isLoading = true);
         final reactivated = Vehicle(
           id: vehicle.id,
           registrationNumber: vehicle.registrationNumber,
@@ -350,9 +506,11 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
           capacity: vehicle.capacity,
           status: 'AVAILABLE',
           lastServiceDate: vehicle.lastServiceDate,
+          nextServiceDate: vehicle.nextServiceDate,
           active: true,
         );
         await _apiService.updateVehicle(vehicle.id!, reactivated);
+        if (!mounted) return;
         _showSnackBar('${vehicle.registrationNumber} reactivated.', Colors.green);
       }
       _loadVehicles();
@@ -409,171 +567,312 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
       );
     }
 
-    if (_vehicles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.local_shipping_outlined, color: MunicipalColors.secondaryText, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'No vehicles in fleet.',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MunicipalColors.primaryText),
-            ),
-            const SizedBox(height: 8),
-            const Text('Click button below to register your first waste collection vehicle.', style: TextStyle(color: MunicipalColors.secondaryText)),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: MunicipalColors.secondaryGreen),
-              onPressed: () => _showVehicleForm(),
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Register Vehicle', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-    }
+    final filteredVehicles = _vehicles.where((vehicle) {
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        if (!vehicle.registrationNumber.toLowerCase().contains(query) &&
+            !vehicle.vehicleType.toLowerCase().contains(query)) {
+          return false;
+        }
+      }
+      if (_filterType != 'ALL' && vehicle.vehicleType != _filterType) return false;
+      if (_filterAvailability != 'ALL' && vehicle.status != _filterAvailability) return false;
+      if (_filterActive != 'ALL') {
+        final isFilterActive = _filterActive == 'ACTIVE';
+        if (vehicle.active != isFilterActive) return false;
+      }
+      return true;
+    }).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
-        onRefresh: _loadVehicles,
-        color: MunicipalColors.secondaryGreen,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _vehicles.length,
-          itemBuilder: (context, index) {
-            final vehicle = _vehicles[index];
-            final statusColor = _getStatusColor(vehicle.status);
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: vehicle.active ? Colors.white : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: vehicle.active ? MunicipalColors.border : Colors.grey.shade300,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x05000000),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+      body: Column(
+        children: [
+          // Search & Filter Panel
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: MunicipalColors.border),
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  decoration: InputDecoration(
+                    hintText: 'Search by registration number or type...',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: IntrinsicHeight(
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      // Active Indicator Color bar
-                      Container(
-                        width: 6,
-                        color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    vehicle.registrationNumber,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: vehicle.active ? MunicipalColors.primaryText : MunicipalColors.secondaryText,
-                                      decoration: vehicle.active ? null : TextDecoration.lineThrough,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: vehicle.active ? MunicipalColors.secondaryGreen.withOpacity(0.1) : Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      vehicle.vehicleType,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  // Status Indicator
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: statusColor.withOpacity(0.5)),
-                                    ),
-                                    child: Text(
-                                      vehicle.status.replaceFirst('_', ' ').toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: statusColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.line_weight_rounded, size: 14, color: MunicipalColors.secondaryText),
-                                  const SizedBox(width: 4),
-                                  Text('Capacity: ${vehicle.capacity} Tons', style: const TextStyle(fontSize: 13, color: MunicipalColors.secondaryText)),
-                                  const SizedBox(width: 16),
-                                  const Icon(Icons.build_outlined, size: 14, color: MunicipalColors.secondaryText),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    vehicle.lastServiceDate != null
-                                      ? 'Serviced: ${vehicle.lastServiceDate!.toLocal().toString().split(' ')[0]}'
-                                      : 'No Service Records',
-                                    style: const TextStyle(fontSize: 13, color: MunicipalColors.secondaryText),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Actions
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: MunicipalColors.secondaryText),
-                            onPressed: () => _showVehicleForm(vehicle),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              vehicle.active ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-                              color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
-                              size: 28,
-                            ),
-                            onPressed: () => _toggleVehicleStatus(vehicle),
-                          ),
+                      _buildFilterDropdown(
+                        label: 'Type',
+                        value: _filterType,
+                        items: const [
+                          DropdownMenuItem(value: 'ALL', child: Text('All Types')),
+                          DropdownMenuItem(value: 'Compactor', child: Text('Compactor')),
+                          DropdownMenuItem(value: 'Dumper', child: Text('Dumper')),
+                          DropdownMenuItem(value: 'Flatbed', child: Text('Flatbed')),
+                          DropdownMenuItem(value: 'Roll-off', child: Text('Roll-off')),
                         ],
+                        onChanged: (val) => setState(() => _filterType = val!),
                       ),
                       const SizedBox(width: 8),
+                      _buildFilterDropdown(
+                        label: 'Status',
+                        value: _filterAvailability,
+                        items: const [
+                          DropdownMenuItem(value: 'ALL', child: Text('All Statuses')),
+                          DropdownMenuItem(value: 'AVAILABLE', child: Text('Available')),
+                          DropdownMenuItem(value: 'ON_DUTY', child: Text('On Duty')),
+                          DropdownMenuItem(value: 'MAINTENANCE', child: Text('Maintenance')),
+                          DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
+                        ],
+                        onChanged: (val) => setState(() => _filterAvailability = val!),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterDropdown(
+                        label: 'Account',
+                        value: _filterActive,
+                        items: const [
+                          DropdownMenuItem(value: 'ALL', child: Text('All Accounts')),
+                          DropdownMenuItem(value: 'ACTIVE', child: Text('Active Only')),
+                          DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive Only')),
+                        ],
+                        onChanged: (val) => setState(() => _filterActive = val!),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              ],
+            ),
+          ),
+
+          // Vehicles list
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadVehicles,
+              color: MunicipalColors.secondaryGreen,
+              child: filteredVehicles.isEmpty
+                  ? Center(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.local_shipping_outlined, color: MunicipalColors.secondaryText, size: 64),
+                              const SizedBox(height: 16),
+                              Text(
+                                _vehicles.isEmpty ? 'No vehicles in fleet.' : 'No matching vehicles found.',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MunicipalColors.primaryText),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text('Try adjusting your search query or filters.', style: TextStyle(color: MunicipalColors.secondaryText)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+                      itemCount: filteredVehicles.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = filteredVehicles[index];
+                        final statusColor = _getStatusColor(vehicle.status);
+
+                        Widget serviceIndicator = const SizedBox.shrink();
+                        if (vehicle.nextServiceDate != null) {
+                          final today = DateTime.now();
+                          final diff = vehicle.nextServiceDate!.difference(today).inDays;
+                          if (vehicle.nextServiceDate!.isBefore(today)) {
+                            serviceIndicator = Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Service OVERDUE! (${vehicle.nextServiceDate!.toLocal().toString().split(' ')[0]})',
+                                    style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else if (diff >= 0 && diff <= 7) {
+                            serviceIndicator = Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.timer_outlined, size: 14, color: Colors.orange),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Service Due Soon: ${vehicle.nextServiceDate!.toLocal().toString().split(' ')[0]}',
+                                    style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else {
+                            serviceIndicator = Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_outlined, size: 14, color: MunicipalColors.secondaryText),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Next Service: ${vehicle.nextServiceDate!.toLocal().toString().split(' ')[0]}',
+                                    style: const TextStyle(fontSize: 12, color: MunicipalColors.secondaryText),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        }
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: vehicle.active ? Colors.white : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: vehicle.active ? MunicipalColors.border : Colors.grey.shade300,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x05000000),
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  // Active Indicator Color bar
+                                  Container(
+                                    width: 6,
+                                    color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  vehicle.registrationNumber,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: vehicle.active ? MunicipalColors.primaryText : MunicipalColors.secondaryText,
+                                                    decoration: vehicle.active ? null : TextDecoration.lineThrough,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: vehicle.active ? MunicipalColors.secondaryGreen.withValues(alpha: 0.1) : Colors.grey.shade200,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  vehicle.vehicleType,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              // Status Indicator
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: statusColor.withValues(alpha: 0.1),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                                                ),
+                                                child: Text(
+                                                  vehicle.status.replaceFirst('_', ' ').toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: statusColor,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.line_weight_rounded, size: 14, color: MunicipalColors.secondaryText),
+                                              const SizedBox(width: 4),
+                                              Text('Capacity: ${vehicle.capacity} Tons', style: const TextStyle(fontSize: 13, color: MunicipalColors.secondaryText)),
+                                              const SizedBox(width: 16),
+                                              const Icon(Icons.build_outlined, size: 14, color: MunicipalColors.secondaryText),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                vehicle.lastServiceDate != null
+                                                  ? 'Serviced: ${vehicle.lastServiceDate!.toLocal().toString().split(' ')[0]}'
+                                                  : 'No Service Records',
+                                                style: const TextStyle(fontSize: 13, color: MunicipalColors.secondaryText),
+                                              ),
+                                            ],
+                                          ),
+                                          serviceIndicator,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  // Actions
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, color: MunicipalColors.secondaryText),
+                                        onPressed: () => _showVehicleForm(vehicle),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          vehicle.active ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+                                          color: vehicle.active ? MunicipalColors.secondaryGreen : Colors.grey,
+                                          size: 28,
+                                        ),
+                                        onPressed: () => _toggleVehicleStatus(vehicle),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: MunicipalColors.secondaryGreen,

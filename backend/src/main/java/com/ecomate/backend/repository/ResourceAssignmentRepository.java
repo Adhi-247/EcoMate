@@ -19,4 +19,8 @@ public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssi
     );
 
     List<ResourceAssignment> findByJobId(Long jobId);
+
+    boolean existsByDriverIdAndStatusIn(Long driverId, List<AssignmentStatus> statuses);
+    boolean existsByCollectorsIdAndStatusIn(Long collectorId, List<AssignmentStatus> statuses);
+    boolean existsByVehicleIdAndStatusIn(Long vehicleId, List<AssignmentStatus> statuses);
 }
