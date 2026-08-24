@@ -56,6 +56,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/council/**")
                     .hasRole("COUNCIL_ADMIN")
 
+                .requestMatchers("/api/municipal/**")
+                    .hasRole("COUNCIL_ADMIN")
+
                 // Everything else requires login
                 .anyRequest().authenticated()
             )
