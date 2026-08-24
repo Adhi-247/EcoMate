@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 
@@ -15,12 +16,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Resident-only demo fields
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _occupationController = TextEditingController();
+
   final AuthService _authService = AuthService();
 
   String _selectedRole = 'RESIDENT';
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
   String? _errorMessage;
 
   Future<void> _register() async {
@@ -29,6 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
+    // Basic validation
     if (name.isEmpty ||
         email.isEmpty ||
         password.isEmpty ||
@@ -37,6 +46,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _errorMessage = 'Please fill all fields';
       });
       return;
+    }
+
+    // Resident-only demo validation
+    if (_selectedRole == 'RESIDENT') {
+      final phone = _phoneController.text.trim();
+      final address = _addressController.text.trim();
+      final occupation = _occupationController.text.trim();
+
+      if (phone.isEmpty ||
+          address.isEmpty ||
+          occupation.isEmpty) {
+        setState(() {
+          _errorMessage =
+              'Please complete all resident information';
+        });
+        return;
+      }
     }
 
     if (password != confirmPassword) {
@@ -48,7 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (password.length < 8) {
       setState(() {
-        _errorMessage = 'Password must be at least 8 characters';
+        _errorMessage =
+            'Password must be at least 8 characters';
       });
       return;
     }
@@ -59,7 +86,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!emailRegex.hasMatch(email)) {
       setState(() {
-        _errorMessage = 'Please enter a valid email address';
+        _errorMessage =
+            'Please enter a valid email address';
       });
       return;
     }
@@ -70,6 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
+      // Only these fields go to backend
       await _authService.register(
         name: name,
         email: email,
@@ -97,11 +126,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [
-                      Color(0xCC4CAF50),
-                      Color(0xCC1F5520),
+                      Color(0xCC0E6B6D),
+                      Color(0xFF0A5A5F),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius:
+                      BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
@@ -174,6 +204,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+
+    _phoneController.dispose();
+    _addressController.dispose();
+    _occupationController.dispose();
+
     super.dispose();
   }
 
@@ -186,7 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       labelText: label,
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFF2E7D32),
+        color: const Color(0xFF0A5A5F),
       ),
       suffixIcon: suffixIcon,
       labelStyle: const TextStyle(
@@ -199,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       focusedBorder: const UnderlineInputBorder(
         borderSide: BorderSide(
-          color: Color(0xFF2E7D32),
+          color: Color(0xFF0A5A5F),
           width: 1.7,
         ),
       ),
@@ -229,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // CHANGE IMAGE HERE
+                        // CHANGE REGISTER IMAGE HERE
                         Image.asset(
                           'assets/images/register_background.jpg',
                           fit: BoxFit.cover,
@@ -260,7 +295,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 34,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight:
+                                      FontWeight.bold,
                                 ),
                               ),
                               SizedBox(height: 5),
@@ -296,14 +332,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius:
+                            BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(
+                            color:
+                                Colors.black.withValues(
                               alpha: 0.12,
                             ),
                             blurRadius: 24,
-                            offset: const Offset(0, 10),
+                            offset:
+                                const Offset(0, 10),
                           ),
                         ],
                       ),
@@ -311,14 +350,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment:
                             CrossAxisAlignment.stretch,
                         children: [
+                          const Text(
+                            'Select Account Type',
+                            style: TextStyle(
+                              color: Color(0xFF505A52),
+                              fontSize: 13,
+                              fontWeight:
+                                  FontWeight.w600,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // ==========================
                           // ROLE SELECTOR
+                          // ==========================
+
                           Row(
                             children: [
                               Expanded(
                                 child: _roleButton(
                                   role: 'RESIDENT',
                                   label: 'Resident',
-                                  icon: Icons.person_rounded,
+                                  icon:
+                                      Icons.person_rounded,
                                 ),
                               ),
 
@@ -328,7 +383,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: _roleButton(
                                   role: 'COLLECTOR',
                                   label: 'Collector',
-                                  icon: Icons.local_shipping_rounded,
+                                  icon: Icons
+                                      .local_shipping_rounded,
                                 ),
                               ),
 
@@ -336,43 +392,156 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               Expanded(
                                 child: _roleButton(
-                                  role: 'RECYCLING_OFFICER',
+                                  role:
+                                      'RECYCLING_OFFICER',
                                   label: 'Recycling',
-                                  icon: Icons.recycling_rounded,
+                                  icon:
+                                      Icons.recycling_rounded,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+
+                          const SizedBox(height: 26),
+
+                          // ==========================
+                          // COMMON FIELDS
+                          // ==========================
 
                           TextField(
                             controller: _nameController,
-                            decoration: _fieldDecoration(
+                            decoration:
+                                _fieldDecoration(
                               label: 'Full name',
-                              icon: Icons.person_outline,
+                              icon:
+                                  Icons.person_outline,
                             ),
                           ),
 
                           const SizedBox(height: 18),
 
                           TextField(
-                            controller: _emailController,
+                            controller:
+                                _emailController,
                             keyboardType:
-                                TextInputType.emailAddress,
-                            decoration: _fieldDecoration(
-                              label: 'Your email address',
-                              icon: Icons.email_outlined,
+                                TextInputType
+                                    .emailAddress,
+                            decoration:
+                                _fieldDecoration(
+                              label:
+                                  'Your email address',
+                              icon:
+                                  Icons.email_outlined,
                             ),
                           ),
 
+                          // ==========================
+                          // RESIDENT-ONLY DEMO FIELDS
+                          // ==========================
+
+                          if (_selectedRole ==
+                              'RESIDENT') ...[
+                            const SizedBox(height: 22),
+
+                            Container(
+                              padding:
+                                  const EdgeInsets.all(
+                                12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF1F7F5,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(
+                                  10,
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons
+                                        .home_work_outlined,
+                                    size: 19,
+                                    color: Color(
+                                      0xFF0A5A5F,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Resident Information',
+                                    style: TextStyle(
+                                      color: Color(
+                                        0xFF0A5A5F,
+                                      ),
+                                      fontSize: 13,
+                                      fontWeight:
+                                          FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            TextField(
+                              controller:
+                                  _phoneController,
+                              keyboardType:
+                                  TextInputType.phone,
+                              decoration:
+                                  _fieldDecoration(
+                                label: 'Phone number',
+                                icon:
+                                    Icons.phone_outlined,
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            TextField(
+                              controller:
+                                  _addressController,
+                              decoration:
+                                  _fieldDecoration(
+                                label:
+                                    'Residential address',
+                                icon:
+                                    Icons.home_outlined,
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            TextField(
+                              controller:
+                                  _occupationController,
+                              decoration:
+                                  _fieldDecoration(
+                                label: 'Occupation',
+                                icon: Icons
+                                    .work_outline_rounded,
+                              ),
+                            ),
+                          ],
+
                           const SizedBox(height: 18),
 
+                          // ==========================
+                          // PASSWORD
+                          // ==========================
+
                           TextField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            decoration: _fieldDecoration(
+                            controller:
+                                _passwordController,
+                            obscureText:
+                                _obscurePassword,
+                            decoration:
+                                _fieldDecoration(
                               label: 'Password',
-                              icon: Icons.lock_outline,
+                              icon:
+                                  Icons.lock_outline,
                               suffixIcon: IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -386,6 +555,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           .visibility_off_outlined
                                       : Icons
                                           .visibility_outlined,
+                                  color: const Color(
+                                    0xFF6E7970,
+                                  ),
                                 ),
                               ),
                             ),
@@ -398,9 +570,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 _confirmPasswordController,
                             obscureText:
                                 _obscureConfirmPassword,
-                            decoration: _fieldDecoration(
-                              label: 'Confirm password',
-                              icon: Icons.lock_reset_outlined,
+                            decoration:
+                                _fieldDecoration(
+                              label:
+                                  'Confirm password',
+                              icon: Icons
+                                  .lock_reset_outlined,
                               suffixIcon: IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -414,23 +589,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           .visibility_off_outlined
                                       : Icons
                                           .visibility_outlined,
+                                  color: const Color(
+                                    0xFF6E7970,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
 
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
+                          if (_errorMessage !=
+                              null) ...[
+                            const SizedBox(height: 18),
+
+                            Container(
+                              padding:
+                                  const EdgeInsets.all(
+                                12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red
+                                    .withValues(
+                                  alpha: 0.07,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(
+                                  10,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color:
+                                        Colors.redAccent,
+                                    size: 19,
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style:
+                                          const TextStyle(
+                                        color: Colors
+                                            .redAccent,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
 
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 30),
+
+                          // ==========================
+                          // SIGN UP BUTTON
+                          // ==========================
 
                           SizedBox(
                             height: 52,
@@ -438,14 +655,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: _isLoading
                                   ? null
                                   : _register,
-                              style: ElevatedButton.styleFrom(
+                              style: ElevatedButton
+                                  .styleFrom(
                                 backgroundColor:
-                                    const Color(0xFF2E7D32),
-                                foregroundColor: Colors.white,
+                                    const Color(
+                                  0xFF0A5A5F,
+                                ),
+                                foregroundColor:
+                                    Colors.white,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(
+                                shape:
+                                    RoundedRectangleBorder(
                                   borderRadius:
-                                      BorderRadius.circular(24),
+                                      BorderRadius.circular(
+                                    24,
+                                  ),
                                 ),
                               ),
                               child: _isLoading
@@ -454,17 +678,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       height: 22,
                                       child:
                                           CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: Colors.white,
+                                        strokeWidth:
+                                            2.5,
+                                        color:
+                                            Colors.white,
                                       ),
                                     )
-                                  : const Text(
-                                      'Sign up',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight:
-                                            FontWeight.bold,
-                                      ),
+                                  : const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment
+                                              .center,
+                                      children: [
+                                        Text(
+                                          'Sign up',
+                                          style:
+                                              TextStyle(
+                                            fontSize:
+                                                16,
+                                            fontWeight:
+                                                FontWeight
+                                                    .bold,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 8,
+                                        ),
+                                        Icon(
+                                          Icons
+                                              .arrow_forward_rounded,
+                                          size: 19,
+                                        ),
+                                      ],
                                     ),
                             ),
                           ),
@@ -473,6 +717,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
+                  // ==========================
+                  // LOGIN LINK
+                  // ==========================
+
                   Transform.translate(
                     offset: const Offset(0, -35),
                     child: Row(
@@ -480,14 +728,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Back to ',
+                          'Already have an account? ',
                           style: TextStyle(
                             color: Color(0xFF777D78),
+                            fontSize: 13,
                           ),
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushReplacement(
+                            Navigator
+                                .pushReplacement(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
@@ -498,14 +748,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: const Text(
                             'Sign in',
                             style: TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontWeight: FontWeight.bold,
+                              color:
+                                  Color(0xFF0A5A5F),
+                              fontSize: 13,
+                              fontWeight:
+                                  FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 10),
                 ],
               ),
             ),
@@ -516,63 +771,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _roleButton({
-  required String role,
-  required String label,
-  required IconData icon,
-}) {
-  final selected = _selectedRole == role;
+    required String role,
+    required String label,
+    required IconData icon,
+  }) {
+    final selected = _selectedRole == role;
 
-  return InkWell(
-    onTap: () {
-      setState(() {
-        _selectedRole = role;
-      });
-    },
-    borderRadius: BorderRadius.circular(18),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 5,
-      ),
-      decoration: BoxDecoration(
-        color: selected
-            ? const Color(0xFF2E7D32)
-            : const Color(0xFFEAF3E9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: selected
-              ? const Color(0xFF2E7D32)
-              : const Color(0xFFC8DEC9),
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+          _errorMessage = null;
+        });
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration:
+            const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 5,
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 23,
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF0A5A5F)
+              : const Color(0xFFEAF3E9),
+          borderRadius:
+              BorderRadius.circular(18),
+          border: Border.all(
             color: selected
-                ? Colors.white
-                : const Color(0xFF2E7D32),
+                ? const Color(0xFF0A5A5F)
+                : const Color(0xFFC8DEC9),
           ),
-
-          const SizedBox(height: 5),
-
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 23,
               color: selected
                   ? Colors.white
-                  : const Color(0xFF2E7D32),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+                  : const Color(0xFF0A5A5F),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 5),
+
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected
+                    ? Colors.white
+                    : const Color(0xFF0A5A5F),
+                fontSize: 11,
+                fontWeight:
+                    FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

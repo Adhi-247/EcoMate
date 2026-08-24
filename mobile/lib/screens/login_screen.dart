@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelText: 'Email',
                               prefixIcon: const Icon(
                                 Icons.email_outlined,
-                                color: Color(0xFF2E7D32),
+                                color: Color(0xFF003239),
                               ),
                               labelStyle: const TextStyle(
                                 color: Color(0xFF69756D),
@@ -231,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               focusedBorder:
                                   const UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Color(0xFF2E7D32),
+                                  color: Color(0xFF003239),
                                   width: 1.7,
                                 ),
                               ),
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelText: 'Password',
                               prefixIcon: const Icon(
                                 Icons.lock_outline,
-                                color: Color(0xFF2E7D32),
+                                color: Color(0xFF003239),
                               ),
                               labelStyle: const TextStyle(
                                 color: Color(0xFF69756D),
@@ -280,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               focusedBorder:
                                   const UnderlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Color(0xFF2E7D32),
+                                  color: Color(0xFF003239),
                                   width: 1.7,
                                 ),
                               ),
@@ -331,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    const Color(0xFF2E7D32),
+                                    const Color(0xFF0A5A5F),
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -377,7 +377,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor:
-                                    const Color(0xFF2E7D32),
+                                    const Color(0xFF003239),
                                 side: const BorderSide(
                                   color: Color(0xFF9AC7A0),
                                 ),
@@ -427,7 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             'Sign up',
                             style: TextStyle(
-                              color: Color(0xFF2E7D32),
+                              color: Color(0xFF003239),
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
