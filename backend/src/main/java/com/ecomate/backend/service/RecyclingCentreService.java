@@ -1,11 +1,8 @@
 package com.ecomate.backend.service;
 
-import com.ecomate.backend.dto.RecyclingCentreRequest;
-import com.ecomate.backend.dto.RecyclingCentreResponse;
-import com.ecomate.backend.entity.RecyclingCentre;
-import com.ecomate.backend.entity.User;
-import com.ecomate.backend.repository.RecyclingCentreRepository;
-import com.ecomate.backend.repository.UserRepository;
+import com.ecomate.backend.dto.*;
+import com.ecomate.backend.entity.*;
+import com.ecomate.backend.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +14,17 @@ import java.util.stream.Collectors;
 public class RecyclingCentreService {
 
     private final RecyclingCentreRepository recyclingCentreRepository;
+    private final MaterialRepository materialRepository;
+    private final RecyclingCentreMaterialRepository recyclingCentreMaterialRepository;
     private final UserRepository userRepository;
 
     public RecyclingCentreService(RecyclingCentreRepository recyclingCentreRepository,
+                                  MaterialRepository materialRepository,
+                                  RecyclingCentreMaterialRepository recyclingCentreMaterialRepository,
                                   UserRepository userRepository) {
         this.recyclingCentreRepository = recyclingCentreRepository;
+        this.materialRepository = materialRepository;
+        this.recyclingCentreMaterialRepository = recyclingCentreMaterialRepository;
         this.userRepository = userRepository;
     }
 
@@ -30,6 +33,53 @@ public class RecyclingCentreService {
         return recyclingCentreRepository.findByOfficerEmailIgnoreCase(officerEmail)
                 .map(RecyclingCentreResponse::fromEntity)
                 .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MaterialDto> getAllMasterMaterials() {
+        return materialRepository.findAll().stream()
+                .map(MaterialDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<MaterialDto> getCentreMaterials(String officerEmail) {
+        RecyclingCentre centre = recyclingCentreRepository.findByOfficerEmailIgnoreCase(officerEmail)
+                .orElseThrow(() -> new RuntimeException("Centre not found for officer: " + officerEmail));
+
+        List<Material> allMaterials = materialRepository.findAll();
+        List<RecyclingCentreMaterial> mappings = recyclingCentreMaterialRepository.findByRecyclingCentreId(centre.getId());
+
+        return allMaterials.stream().map(mat -> {
+            Optional<RecyclingCentreMaterial> mapOpt = mappings.stream()
+                    .filter(m -> m.getMaterial().getId().equals(mat.getId()))
+                    .findFirst();
+            boolean isActive = mapOpt.map(RecyclingCentreMaterial::getIsActive).orElse(false);
+            return MaterialDto.fromEntityWithStatus(mat, isActive);
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RecyclingCentreResponse toggleMaterialStatus(String officerEmail, Long materialId, Boolean isActive) {
+        RecyclingCentre centre = recyclingCentreRepository.findByOfficerEmailIgnoreCase(officerEmail)
+                .orElseThrow(() -> new RuntimeException("Centre not found for officer: " + officerEmail));
+
+        Material material = materialRepository.findById(materialId)
+                .orElseThrow(() -> new RuntimeException("Material not found with id: " + materialId));
+
+        Optional<RecyclingCentreMaterial> existingMapping = recyclingCentreMaterialRepository
+                .findByRecyclingCentreIdAndMaterialId(centre.getId(), materialId);
+
+        if (existingMapping.isPresent()) {
+            RecyclingCentreMaterial mapping = existingMapping.get();
+            mapping.setIsActive(isActive);
+            recyclingCentreMaterialRepository.save(mapping);
+        } else {
+            RecyclingCentreMaterial newMapping = new RecyclingCentreMaterial(centre, material, isActive);
+            recyclingCentreMaterialRepository.save(newMapping);
+        }
+
+        return getMyCentre(officerEmail);
     }
 
     @Transactional
@@ -56,12 +106,6 @@ public class RecyclingCentreService {
         }
         if (request.getIsOpen() != null) {
             centre.setIsOpen(request.getIsOpen());
-        }
-        if (request.getAcceptedMaterials() != null) {
-            centre.setAcceptedMaterials(request.getAcceptedMaterials());
-        }
-        if (request.getUnsupportedMaterials() != null) {
-            centre.setUnsupportedMaterials(request.getUnsupportedMaterials());
         }
         if (request.getNotes() != null) {
             centre.setNotes(request.getNotes());
@@ -92,12 +136,6 @@ public class RecyclingCentreService {
                     return c.getName().toLowerCase().contains(q)
                             || c.getCity().toLowerCase().contains(q)
                             || c.getAddress().toLowerCase().contains(q);
-                })
-                .filter(c -> {
-                    if (materialFilter == null || materialFilter.isBlank() || materialFilter.equalsIgnoreCase("All")) return true;
-                    String m = materialFilter.trim().toLowerCase();
-                    return c.getAcceptedMaterials().stream()
-                            .anyMatch(mat -> mat.toLowerCase().contains(m));
                 })
                 .map(RecyclingCentreResponse::fromEntity)
                 .collect(Collectors.toList());

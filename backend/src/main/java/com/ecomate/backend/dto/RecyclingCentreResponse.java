@@ -1,6 +1,7 @@
 package com.ecomate.backend.dto;
 
 import com.ecomate.backend.entity.RecyclingCentre;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclingCentreResponse {
@@ -18,9 +19,10 @@ public class RecyclingCentreResponse {
     private String email;
     private String operatingHours;
     private Boolean isOpen;
-    private List<String> acceptedMaterials;
-    private List<String> unsupportedMaterials;
     private String notes;
+    private List<String> acceptedMaterials = new ArrayList<>();
+    private List<String> unsupportedMaterials = new ArrayList<>();
+    private List<MaterialDto> materials = new ArrayList<>();
 
     public RecyclingCentreResponse() {
     }
@@ -42,9 +44,19 @@ public class RecyclingCentreResponse {
         response.setEmail(entity.getEmail());
         response.setOperatingHours(entity.getOperatingHours());
         response.setIsOpen(entity.getIsOpen());
-        response.setAcceptedMaterials(entity.getAcceptedMaterials());
-        response.setUnsupportedMaterials(entity.getUnsupportedMaterials());
         response.setNotes(entity.getNotes());
+
+        if (entity.getCentreMaterials() != null) {
+            entity.getCentreMaterials().forEach(cm -> {
+                MaterialDto mdto = MaterialDto.fromEntityWithStatus(cm.getMaterial(), cm.getIsActive());
+                response.getMaterials().add(mdto);
+                if (Boolean.TRUE.equals(cm.getIsActive())) {
+                    response.getAcceptedMaterials().add(cm.getMaterial().getName());
+                } else {
+                    response.getUnsupportedMaterials().add(cm.getMaterial().getName());
+                }
+            });
+        }
         return response;
     }
 
@@ -152,6 +164,14 @@ public class RecyclingCentreResponse {
         this.isOpen = isOpen;
     }
 
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
     public List<String> getAcceptedMaterials() {
         return acceptedMaterials;
     }
@@ -168,11 +188,11 @@ public class RecyclingCentreResponse {
         this.unsupportedMaterials = unsupportedMaterials;
     }
 
-    public String getNotes() {
-        return notes;
+    public List<MaterialDto> getMaterials() {
+        return materials;
     }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
+    public void setMaterials(List<MaterialDto> materials) {
+        this.materials = materials;
     }
 }

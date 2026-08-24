@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/material_item.dart';
 import '../../models/recycling_centre.dart';
 import '../../services/auth_service.dart';
 import '../../services/recycling_service.dart';
@@ -18,6 +19,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
   String _officerName = 'Officer';
   String _officerEmail = 'stharanga.rog@gmail.com';
   RecyclingCentre? _myCentre;
+  List<MaterialItem> _centreMaterials = [];
   bool _isLoading = true;
 
   @override
@@ -41,12 +43,14 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
         : 'Officer';
 
     final centre = await _recyclingService.getCentreForOfficer(activeEmail);
+    final materials = await _recyclingService.getCentreMaterialsForOfficer(activeEmail);
 
     if (mounted) {
       setState(() {
         _officerEmail = activeEmail;
         _officerName = activeName;
         _myCentre = centre;
+        _centreMaterials = materials;
         _isLoading = false;
       });
     }
@@ -192,10 +196,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
   void _openManageMaterialsModal() {
     if (_myCentre == null) return;
 
-    final masterList = _recyclingService.getMasterMaterialList();
-    final selectedSet = _myCentre!.acceptedMaterials
-        .where((m) => masterList.contains(m))
-        .toSet();
+    List<MaterialItem> tempMaterials = List.from(_centreMaterials);
 
     showDialog(
       context: context,
@@ -210,7 +211,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                   Icon(Icons.inventory_2_outlined, color: Color(0xFF1F5520)),
                   SizedBox(width: 10),
                   Text(
-                    'Manage Accepted Items',
+                    'Manage Accepted Materials',
                     style: TextStyle(
                       color: Color(0xFF1F5520),
                       fontSize: 18,
@@ -223,28 +224,39 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
-                  itemCount: masterList.length,
+                  itemCount: tempMaterials.length,
                   itemBuilder: (context, index) {
-                    final item = masterList[index];
-                    final isChecked = selectedSet.contains(item);
+                    final mat = tempMaterials[index];
                     return CheckboxListTile(
                       activeColor: const Color(0xFF2E7D32),
+                      secondary: mat.imageUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                mat.imageUrl,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.recycling, color: Color(0xFF2E7D32)),
+                              ),
+                            )
+                          : const Icon(Icons.recycling, color: Color(0xFF2E7D32)),
                       title: Text(
-                        item,
+                        mat.name,
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: isChecked ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: mat.isActive ? FontWeight.w600 : FontWeight.normal,
                           color: const Color(0xFF2D3748),
                         ),
                       ),
-                      value: isChecked,
+                      subtitle: Text(
+                        mat.category,
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                      ),
+                      value: mat.isActive,
                       onChanged: (bool? value) {
                         setModalState(() {
-                          if (value == true) {
-                            selectedSet.add(item);
-                          } else {
-                            selectedSet.remove(item);
-                          }
+                          tempMaterials[index] = mat.copyWith(isActive: value ?? false);
                         });
                       },
                     );
@@ -258,25 +270,38 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final updatedAccepted = selectedSet.toList();
-                    final updatedUnsupported = masterList
-                        .where((item) => !selectedSet.contains(item))
+                    // Save all toggled states to backend mapping table
+                    for (final mat in tempMaterials) {
+                      await _recyclingService.toggleMaterialStatus(mat.id, mat.isActive);
+                    }
+
+                    final acceptedNames = tempMaterials
+                        .where((m) => m.isActive)
+                        .map((m) => m.name)
+                        .toList();
+
+                    final unsupportedNames = tempMaterials
+                        .where((m) => !m.isActive)
+                        .map((m) => m.name)
                         .toList();
 
                     final updatedCentre = _myCentre!.copyWith(
-                      acceptedMaterials: updatedAccepted,
-                      unsupportedMaterials: updatedUnsupported,
+                      acceptedMaterials: acceptedNames,
+                      unsupportedMaterials: unsupportedNames,
                     );
 
                     await _recyclingService.saveOrUpdateCentre(updatedCentre);
+
                     setState(() {
+                      _centreMaterials = tempMaterials;
                       _myCentre = updatedCentre;
                     });
+
                     if (!context.mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Accepted and unsupported materials updated'),
+                        content: Text('Accepted materials (is_active: 1/0) updated successfully'),
                         backgroundColor: Color(0xFF2E7D32),
                       ),
                     );
@@ -291,104 +316,6 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  void _openRegisterCentreModal() {
-    final nameController = TextEditingController();
-    final addressController = TextEditingController();
-    final cityController = TextEditingController(text: 'Colombo');
-    final phoneController = TextEditingController();
-    final hoursController = TextEditingController(text: 'Mon - Sat: 8:00 AM - 5:30 PM');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.only(
-            top: 24,
-            left: 24,
-            right: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Register Your Recycling Centre',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F5520),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(nameController, 'Centre Name', Icons.storefront),
-                const SizedBox(height: 12),
-                _buildTextField(addressController, 'Address', Icons.location_on),
-                const SizedBox(height: 12),
-                _buildTextField(cityController, 'City / Region', Icons.location_city),
-                const SizedBox(height: 12),
-                _buildTextField(phoneController, 'Contact Phone', Icons.phone),
-                const SizedBox(height: 12),
-                _buildTextField(hoursController, 'Operating Hours', Icons.access_time),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isEmpty || addressController.text.isEmpty) {
-                      return;
-                    }
-                    final newCentre = RecyclingCentre(
-                      id: 'rc_${DateTime.now().millisecondsSinceEpoch}',
-                      officerEmail: _officerEmail,
-                      name: nameController.text.trim(),
-                      address: addressController.text.trim(),
-                      city: cityController.text.trim(),
-                      distanceKm: 1.0,
-                      contactNumber: phoneController.text.trim(),
-                      email: _officerEmail,
-                      operatingHours: hoursController.text.trim(),
-                      isOpen: true,
-                      acceptedMaterials: [
-                        'Plastic Bottles (PET #1)',
-                        'Cardboard & Office Paper',
-                        'Aluminum & Tin Cans',
-                      ],
-                      unsupportedMaterials: [
-                        'Hazardous Chemicals',
-                        'Medical Waste',
-                      ],
-                      notes: 'Registered official municipal collection facility.',
-                    );
-                    await _recyclingService.saveOrUpdateCentre(newCentre);
-                    setState(() => _myCentre = newCentre);
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F5520),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text(
-                    'Register Centre',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-          ),
         );
       },
     );
@@ -428,6 +355,9 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final acceptedList = _centreMaterials.where((m) => m.isActive).toList();
+    final unsupportedList = _centreMaterials.where((m) => !m.isActive).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF7),
       appBar: AppBar(
@@ -540,7 +470,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
                         const SizedBox(height: 20),
 
-                        // If no centre is registered yet
+                        // If no centre registered yet
                         if (_myCentre == null) ...[
                           Container(
                             padding: const EdgeInsets.all(24),
@@ -549,47 +479,27 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: const Color(0xFFD9E3DA)),
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.store_mall_directory_outlined,
                                   size: 54,
                                   color: Color(0xFF2E7D32),
                                 ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'No Recycling Centre Assigned',
+                                SizedBox(height: 12),
+                                Text(
+                                  'No Facility Assigned',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1F5520),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'Register your facility details to manage accepted materials and operating hours.',
+                                SizedBox(height: 6),
+                                Text(
+                                  'Please contact your Municipal Council Administrator to link your facility.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFF69756D),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 18),
-                                ElevatedButton.icon(
-                                  onPressed: _openRegisterCentreModal,
-                                  icon: const Icon(Icons.add_business_rounded),
-                                  label: const Text('Register My Centre'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1F5520),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                  style: TextStyle(color: Color(0xFF69756D), fontSize: 13),
                                 ),
                               ],
                             ),
@@ -662,7 +572,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
                           const SizedBox(height: 20),
 
-                          // Centre Information Card
+                          // Centre Profile Details Card
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -717,7 +627,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
                           const SizedBox(height: 20),
 
-                          // Accepted Materials Card
+                          // Accepted Materials Card (is_active == true / 1)
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -740,7 +650,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Accepted Materials (${_myCentre!.acceptedMaterials.length})',
+                                          'Accepted Materials (${acceptedList.length})',
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -760,51 +670,75 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _myCentre!.acceptedMaterials.map((mat) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE8F5E9),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: const Color(0xFFC8E6C9),
+                                if (acceptedList.isEmpty)
+                                  const Text(
+                                    'No materials currently marked as accepted. Tap "Manage" to select accepted materials.',
+                                    style: TextStyle(fontSize: 13, color: Color(0xFF757575), fontStyle: FontStyle.italic),
+                                  )
+                                else
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: acceptedList.map((mat) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
                                         ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.check,
-                                            size: 14,
-                                            color: Color(0xFF2E7D32),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE8F5E9),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: const Color(0xFFC8E6C9),
                                           ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            mat,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: Color(0xFF1B5E20),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (mat.imageUrl.isNotEmpty) ...[
+                                              ClipRRect(
+                                                borderRadius: BorderRadius.circular(4),
+                                                child: Image.network(
+                                                  mat.imageUrl,
+                                                  width: 18,
+                                                  height: 18,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) => const Icon(
+                                                    Icons.check,
+                                                    size: 14,
+                                                    color: Color(0xFF2E7D32),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                            ] else ...[
+                                              const Icon(
+                                                Icons.check,
+                                                size: 14,
+                                                color: Color(0xFF2E7D32),
+                                              ),
+                                              const SizedBox(width: 6),
+                                            ],
+                                            Text(
+                                              mat.name,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFF1B5E20),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                               ],
                             ),
                           ),
 
                           const SizedBox(height: 20),
 
-                          // Unsupported Materials Card
+                          // Unsupported Materials Card (is_active == false / 0)
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -824,7 +758,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Unsupported Items (${_myCentre!.unsupportedMaterials.length})',
+                                      'Unsupported Items (${unsupportedList.length})',
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
@@ -834,9 +768,9 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                   ],
                                 ),
                                 const SizedBox(height: 10),
-                                if (_myCentre!.unsupportedMaterials.isEmpty)
+                                if (unsupportedList.isEmpty)
                                   const Text(
-                                    'None — all categories are currently accepted.',
+                                    'None â€” all categories are currently accepted.',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Color(0xFF757575),
@@ -844,7 +778,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                     ),
                                   )
                                 else
-                                  ..._myCentre!.unsupportedMaterials.map((mat) {
+                                  ...unsupportedList.map((mat) {
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 4),
                                       child: Row(
@@ -857,7 +791,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              mat,
+                                              mat.name,
                                               style: const TextStyle(
                                                 fontSize: 13,
                                                 color: Color(0xFFB71C1C),

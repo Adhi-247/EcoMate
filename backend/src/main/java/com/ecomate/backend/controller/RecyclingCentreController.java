@@ -1,7 +1,6 @@
 package com.ecomate.backend.controller;
 
-import com.ecomate.backend.dto.RecyclingCentreRequest;
-import com.ecomate.backend.dto.RecyclingCentreResponse;
+import com.ecomate.backend.dto.*;
 import com.ecomate.backend.service.RecyclingCentreService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,26 @@ public class RecyclingCentreController {
         return ResponseEntity.ok(centre);
     }
 
-    // 2. Create or Update logged-in officer's centre
+    // 2. Get master materials with is_active flag for logged-in officer's centre
+    @GetMapping("/my-centre/materials")
+    public ResponseEntity<List<MaterialDto>> getMyCentreMaterials(Authentication authentication) {
+        String officerEmail = authentication.getName();
+        List<MaterialDto> materials = recyclingCentreService.getCentreMaterials(officerEmail);
+        return ResponseEntity.ok(materials);
+    }
+
+    // 3. Toggle single material is_active (1 or 0) for logged-in officer's centre
+    @PutMapping("/my-centre/materials/toggle")
+    public ResponseEntity<RecyclingCentreResponse> toggleMaterial(
+            Authentication authentication,
+            @RequestBody CentreMaterialToggleRequest request) {
+        String officerEmail = authentication.getName();
+        RecyclingCentreResponse response = recyclingCentreService.toggleMaterialStatus(
+                officerEmail, request.getMaterialId(), request.getIsActive());
+        return ResponseEntity.ok(response);
+    }
+
+    // 4. Create or Update logged-in officer's centre profile
     @PutMapping("/my-centre")
     public ResponseEntity<RecyclingCentreResponse> createOrUpdateMyCentre(
             Authentication authentication,
@@ -42,7 +60,7 @@ public class RecyclingCentreController {
         return ResponseEntity.ok(updated);
     }
 
-    // 3. Toggle logged-in officer's centre open/closed status
+    // 5. Toggle Open/Closed status
     @PatchMapping("/my-centre/status")
     public ResponseEntity<RecyclingCentreResponse> toggleStatus(
             Authentication authentication,
@@ -53,7 +71,14 @@ public class RecyclingCentreController {
         return ResponseEntity.ok(updated);
     }
 
-    // 4. Public endpoint for residents & community users to search nearby centres
+    // 6. Public endpoint: All master materials (for Waste Segregation Guide)
+    @GetMapping("/public/materials")
+    public ResponseEntity<List<MaterialDto>> getPublicMaterials() {
+        List<MaterialDto> materials = recyclingCentreService.getAllMasterMaterials();
+        return ResponseEntity.ok(materials);
+    }
+
+    // 7. Public endpoint: Search nearby centres
     @GetMapping("/public/centres")
     public ResponseEntity<List<RecyclingCentreResponse>> getPublicCentres(
             @RequestParam(required = false) String query,
@@ -62,7 +87,7 @@ public class RecyclingCentreController {
         return ResponseEntity.ok(centres);
     }
 
-    // 5. Public endpoint to view a specific centre's details
+    // 8. Public endpoint: View specific centre
     @GetMapping("/public/centres/{id}")
     public ResponseEntity<RecyclingCentreResponse> getCentreById(@PathVariable Long id) {
         RecyclingCentreResponse centre = recyclingCentreService.getCentreById(id);

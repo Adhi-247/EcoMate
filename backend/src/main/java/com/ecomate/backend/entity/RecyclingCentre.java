@@ -49,25 +49,17 @@ public class RecyclingCentre {
     @Column(name = "is_open", nullable = false)
     private Boolean isOpen = true;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "recycling_centre_accepted_materials", joinColumns = @JoinColumn(name = "centre_id"))
-    @Column(name = "material")
-    private List<String> acceptedMaterials = new ArrayList<>();
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "recycling_centre_unsupported_materials", joinColumns = @JoinColumn(name = "centre_id"))
-    @Column(name = "material")
-    private List<String> unsupportedMaterials = new ArrayList<>();
-
     @Column(length = 1000)
     private String notes = "";
+
+    @OneToMany(mappedBy = "recyclingCentre", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecyclingCentreMaterial> centreMaterials = new ArrayList<>();
 
     public RecyclingCentre() {
     }
 
     public RecyclingCentre(User officer, String officerEmail, String name, String address, String city,
-                           String contactNumber, String email, String operatingHours, Boolean isOpen,
-                           List<String> acceptedMaterials, List<String> unsupportedMaterials, String notes) {
+                           String contactNumber, String email, String operatingHours, Boolean isOpen, String notes) {
         this.officer = officer;
         this.officerEmail = officerEmail;
         this.name = name;
@@ -77,8 +69,6 @@ public class RecyclingCentre {
         this.email = email;
         this.operatingHours = operatingHours;
         this.isOpen = isOpen;
-        this.acceptedMaterials = acceptedMaterials != null ? acceptedMaterials : new ArrayList<>();
-        this.unsupportedMaterials = unsupportedMaterials != null ? unsupportedMaterials : new ArrayList<>();
         this.notes = notes;
     }
 
@@ -186,27 +176,19 @@ public class RecyclingCentre {
         this.isOpen = isOpen;
     }
 
-    public List<String> getAcceptedMaterials() {
-        return acceptedMaterials;
-    }
-
-    public void setAcceptedMaterials(List<String> acceptedMaterials) {
-        this.acceptedMaterials = acceptedMaterials;
-    }
-
-    public List<String> getUnsupportedMaterials() {
-        return unsupportedMaterials;
-    }
-
-    public void setUnsupportedMaterials(List<String> unsupportedMaterials) {
-        this.unsupportedMaterials = unsupportedMaterials;
-    }
-
     public String getNotes() {
         return notes;
     }
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public List<RecyclingCentreMaterial> getCentreMaterials() {
+        return centreMaterials;
+    }
+
+    public void setCentreMaterials(List<RecyclingCentreMaterial> centreMaterials) {
+        this.centreMaterials = centreMaterials;
     }
 }
