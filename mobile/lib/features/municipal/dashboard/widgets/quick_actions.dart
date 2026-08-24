@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/municipal_colors.dart';
+import '../../../../screens/recycling/waste_segregation_guide_screen.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   final VoidCallback onManageSchedules;
@@ -15,7 +16,7 @@ class QuickActionsWidget extends StatelessWidget {
     required this.onSendAlerts,
   });
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +46,7 @@ class QuickActionsWidget extends StatelessWidget {
                 icon: Icons.forum_rounded,
                 iconColor: const Color(0xFF06B6D4), // Teal
                 label: "Complaints",
-                onTap: onViewReports, // Navigates to reports/complaints tab
+                onTap: onViewReports,
               ),
             ),
             const SizedBox(width: 8),
@@ -54,7 +55,7 @@ class QuickActionsWidget extends StatelessWidget {
                 icon: Icons.local_shipping_rounded,
                 iconColor: const Color(0xFF3B82F6), // Blue
                 label: "Vehicles",
-                onTap: onAssignCollectors, // Navigates to operations tab
+                onTap: onAssignCollectors,
               ),
             ),
             const SizedBox(width: 8),
@@ -63,7 +64,23 @@ class QuickActionsWidget extends StatelessWidget {
                 icon: Icons.bar_chart_rounded,
                 iconColor: const Color(0xFF10B981), // Emerald Green
                 label: "Reports",
-                onTap: onViewReports, // Navigates to reports tab
+                onTap: onViewReports,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.menu_book_rounded,
+                iconColor: const Color(0xFF16A34A), // Forest Green
+                label: "Guide",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WasteSegregationGuideScreen(),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -97,22 +114,24 @@ class QuickActionsWidget extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 2),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
                   color: iconColor,
-                  size: 32,
+                  size: 26,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   label,
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: MunicipalColors.primaryText,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
