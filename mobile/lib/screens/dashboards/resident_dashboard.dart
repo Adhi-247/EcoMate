@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../login_screen.dart';
 import '../recycling/waste_segregation_guide_screen.dart';
 import '../collection_schedule_screen.dart';
+import '../report_issue_screen.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({super.key});
@@ -70,6 +71,17 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
         MaterialPageRoute(
           builder: (_) =>
               const CollectionScheduleScreen(),
+        ),
+      );
+
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ReportIssueScreen(),
         ),
       );
 
@@ -1231,7 +1243,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                       const SizedBox(height: 2),
 
                       const Text(
-                        'Request',
+                        'Report',
                         style: TextStyle(
                           color:
                               Colors.black54,
