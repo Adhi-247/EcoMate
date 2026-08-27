@@ -31,6 +31,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   Uint8List? _photoBytes;
   String? _photoData;
   bool _submitting = false;
+  bool _reviewing = false;
 
   @override
   void dispose() {
@@ -86,6 +87,14 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     }
   }
 
+  void _openReview() {
+    if (_locationController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
+      _showMessage('Add a location and description before reviewing.');
+      return;
+    }
+    setState(() => _reviewing = true);
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: darkGreen));
   }
@@ -98,13 +107,24 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         backgroundColor: background,
         foregroundColor: darkGreen,
         elevation: 0,
-        title: const Text('Report Details', style: TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
+        title: Text(_reviewing ? 'Review Report' : 'Report Details', style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
         children: [
+          _ReportProgress(activeStep: _reviewing ? 3 : 2),
           _stepHeader(),
+          if (_reviewing) _reviewSummary() else _detailsForm(),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailsForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           const SizedBox(height: 22),
           Text('Issue: ${widget.issueType}', style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w700)),
           const SizedBox(height: 16),
@@ -148,17 +168,72 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: _submitting ? null : _submit,
+              onPressed: _submitting ? null : _openReview,
               style: ElevatedButton.styleFrom(backgroundColor: darkGreen, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Report', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text('Review Report', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
-  Widget _stepHeader() => const Text('Step 2 of 4  •  Details & evidence', style: TextStyle(color: secondaryText, fontWeight: FontWeight.w600));
+  Widget _reviewSummary() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 22),
+        _reviewRow('Issue type', widget.issueType),
+        _reviewRow('Location', _locationController.text.trim()),
+        _reviewRow('Category', _category),
+        _reviewRow('Description', _descriptionController.text.trim()),
+        _reviewRow('Evidence', _photoBytes == null ? 'No photo attached' : 'Photo attached'),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(child: OutlinedButton(onPressed: () => setState(() => _reviewing = false), child: const Text('Edit'))),
+            const SizedBox(width: 12),
+            Expanded(child: ElevatedButton(onPressed: _submitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: darkGreen, foregroundColor: Colors.white), child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Report'))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _reviewRow(String label, String value) => Padding(padding: const EdgeInsets.only(bottom: 14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: secondaryText, fontSize: 12, fontWeight: FontWeight.w700)), const SizedBox(height: 4), Text(value, style: const TextStyle(color: text, fontSize: 15))]));
+  Widget _stepHeader() => Text(_reviewing ? 'Step 4 of 4  •  Confirm and submit' : 'Step 3 of 4  •  Details and evidence', style: const TextStyle(color: secondaryText, fontWeight: FontWeight.w600));
   Widget _label(String label) => Padding(padding: const EdgeInsets.only(bottom: 7), child: Text(label, style: const TextStyle(color: text, fontWeight: FontWeight.w700)));
   InputDecoration _decoration(String hint, IconData icon) => InputDecoration(hintText: hint, prefixIcon: Icon(icon, color: green), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: border)));
+}
+
+class _ReportProgress extends StatelessWidget {
+  const _ReportProgress({required this.activeStep});
+
+  final int activeStep;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Type', 'Location', 'Details', 'Review'];
+    return Row(
+      children: List.generate(labels.length, (index) {
+        final complete = index <= activeStep;
+        return Expanded(
+          child: Column(
+            children: [
+              Row(children: [
+                if (index > 0) const Expanded(child: Divider(color: _ReportDetailsScreenState.border)),
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: complete ? _ReportDetailsScreenState.darkGreen : const Color(0xFFE2E4E4),
+                  child: Text('${index + 1}', style: TextStyle(color: complete ? Colors.white : _ReportDetailsScreenState.secondaryText, fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+                if (index < labels.length - 1) const Expanded(child: Divider(color: _ReportDetailsScreenState.border)),
+              ]),
+              const SizedBox(height: 4),
+              Text(labels[index], style: TextStyle(color: complete ? _ReportDetailsScreenState.darkGreen : _ReportDetailsScreenState.secondaryText, fontSize: 10)),
+            ],
+          ),
+        );
+      }),
+    );
+  }
 }

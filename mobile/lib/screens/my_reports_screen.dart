@@ -24,7 +24,14 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     _reports = _service.getMyReports();
   }
 
-  void _reload() => setState(() => _reports = _service.getMyReports());
+  Future<void> _reload() async {
+    final reports = _service.getMyReports();
+    if (!mounted) return;
+    setState(() {
+      _reports = reports;
+    });
+    await reports;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +43,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
         elevation: 0,
         title: const Text('My Reports', style: TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
         centerTitle: true,
-        actions: [IconButton(onPressed: _reload, icon: const Icon(Icons.refresh_rounded))],
+        actions: [IconButton(onPressed: () { _reload(); }, icon: const Icon(Icons.refresh_rounded))],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _reports,
@@ -53,7 +60,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           }
           return RefreshIndicator(
             color: darkGreen,
-            onRefresh: () async => _reload(),
+            onRefresh: _reload,
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: reports.length,

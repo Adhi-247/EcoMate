@@ -20,7 +20,14 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
     _reports = _service.getAdminReports();
   }
 
-  void _reload() => setState(() => _reports = _service.getAdminReports());
+  Future<void> _reload() async {
+    final reports = _service.getAdminReports();
+    if (!mounted) return;
+    setState(() {
+      _reports = reports;
+    });
+    await reports;
+  }
 
   Future<void> _editReport(Map<String, dynamic> report) async {
     var status = report['status']?.toString() ?? 'SUBMITTED';
@@ -79,7 +86,7 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
           ),
         ),
         title: const Text('Reports', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [IconButton(onPressed: _reload, icon: const Icon(Icons.refresh_rounded))],
+        actions: [IconButton(onPressed: () { _reload(); }, icon: const Icon(Icons.refresh_rounded))],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _reports,
