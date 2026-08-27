@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ReportIssueScreen extends StatelessWidget {
+class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
 
   static const _deepBlue = Color(0xFF022A3B);
@@ -14,15 +14,38 @@ class ReportIssueScreen extends StatelessWidget {
   static const _secondaryText = Color(0xFF64748B);
 
   @override
+  State<ReportIssueScreen> createState() => _ReportIssueScreenState();
+}
+
+class _ReportIssueScreenState extends State<ReportIssueScreen> {
+  String _selectedIssueType = 'Illegal Dumping';
+
+  void _selectIssueType(String issueType) {
+    setState(() {
+      _selectedIssueType = issueType;
+    });
+  }
+
+  void _continueToNextStep() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Selected: $_selectedIssueType'),
+        backgroundColor: ReportIssueScreen._darkGreen,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _deepBlue,
+      backgroundColor: ReportIssueScreen._deepBlue,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 430),
             child: Container(
-              color: _background,
+              color: ReportIssueScreen._background,
               child: Column(
                 children: [
                   const _WindowBar(),
@@ -34,11 +57,11 @@ class ReportIssueScreen extends StatelessWidget {
                         Expanded(
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Select Issue Type',
                                 style: TextStyle(
-                                  color: _text,
+                                  color: ReportIssueScreen._text,
                                   fontSize: 19,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -50,40 +73,49 @@ class ReportIssueScreen extends StatelessWidget {
                                 icon: Icons.delete_forever_rounded,
                                 iconBackground: Color(0xFFFFD9DC),
                                 iconColor: Color(0xFFFF6B6B),
-                                selected: true,
+                                selected: _selectedIssueType == 'Illegal Dumping',
+                                onTap: () => _selectIssueType('Illegal Dumping'),
                               ),
                               _IssueCard(
                                 title: 'Overflowing Bin',
                                 description: 'Report bins that are full or overflowing.',
                                 icon: Icons.delete_outline_rounded,
                                 iconBackground: Color(0xFFD5F6D2),
-                                iconColor: _green,
+                                iconColor: ReportIssueScreen._green,
+                                selected: _selectedIssueType == 'Overflowing Bin',
+                                onTap: () => _selectIssueType('Overflowing Bin'),
                               ),
                               _IssueCard(
                                 title: 'Damaged Bin',
                                 description: 'Report damaged or broken public bins.',
                                 icon: Icons.warning_rounded,
                                 iconBackground: Color(0xFFD9F4DC),
-                                iconColor: _darkGreen,
+                                iconColor: ReportIssueScreen._darkGreen,
+                                selected: _selectedIssueType == 'Damaged Bin',
+                                onTap: () => _selectIssueType('Damaged Bin'),
                               ),
                               _IssueCard(
                                 title: 'Missed Cleanup',
                                 description: 'Report missed waste collection/cleanup.',
                                 icon: Icons.local_shipping_rounded,
                                 iconBackground: Color(0xFFD5F6D2),
-                                iconColor: _green,
+                                iconColor: ReportIssueScreen._green,
+                                selected: _selectedIssueType == 'Missed Cleanup',
+                                onTap: () => _selectIssueType('Missed Cleanup'),
                               ),
                               _IssueCard(
                                 title: 'Other Issue',
                                 description: 'Any other waste-related problem.',
                                 icon: Icons.help_outline_rounded,
                                 iconBackground: Color(0xFFE2E5E6),
-                                iconColor: _secondaryText,
+                                iconColor: ReportIssueScreen._secondaryText,
+                                selected: _selectedIssueType == 'Other Issue',
+                                onTap: () => _selectIssueType('Other Issue'),
                               ),
                             ],
                           ),
                         ),
-                        const _NextButton(),
+                        _NextButton(onPressed: _continueToNextStep),
                         const _BottomNavigation(),
                       ],
                     ),
@@ -226,6 +258,7 @@ class _IssueCard extends StatelessWidget {
     required this.iconBackground,
     required this.iconColor,
     this.selected = false,
+    required this.onTap,
   });
 
   final String title;
@@ -234,66 +267,83 @@ class _IssueCard extends StatelessWidget {
   final Color iconBackground;
   final Color iconColor;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: selected ? ReportIssueScreen._green : ReportIssueScreen._border,
-          width: selected ? 1.2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: iconBackground, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: ReportIssueScreen._text, fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  description,
-                  style: const TextStyle(color: ReportIssueScreen._secondaryText, fontSize: 11.5, height: 1.25),
-                ),
-              ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? ReportIssueScreen._green : ReportIssueScreen._border,
+              width: selected ? 1.2 : 1,
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: ReportIssueScreen._darkGreen, size: 23),
-        ],
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: iconBackground, shape: BoxShape.circle),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(color: ReportIssueScreen._text, fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: const TextStyle(color: ReportIssueScreen._secondaryText, fontSize: 11.5, height: 1.25),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: ReportIssueScreen._darkGreen, size: 23),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 class _NextButton extends StatelessWidget {
-  const _NextButton();
+  const _NextButton({required this.onPressed});
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(18, 0, 18, 8),
-      height: 42,
-      width: double.infinity,
-      decoration: BoxDecoration(color: ReportIssueScreen._darkGreen, borderRadius: BorderRadius.circular(8)),
-      alignment: Alignment.center,
-      child: const Text(
-        'Next',
-        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+      child: SizedBox(
+        height: 42,
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ReportIssueScreen._darkGreen,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: const Text(
+            'Next',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+        ),
       ),
     );
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/report_issue_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const EcoMateApp());
@@ -17,7 +17,7 @@ class EcoMateApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF024B45)),
         useMaterial3: true,
       ),
-      home: const ReportIssueScreen(),
+      home: const SplashScreen(),
     );
   }
 }
