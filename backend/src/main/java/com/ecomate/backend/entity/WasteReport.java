@@ -31,14 +31,13 @@ public class WasteReport {
     @Column(nullable = false, length = 1200)
     private String description;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String photoData;
 
     @Column(nullable = false, length = 24)
     private String status;
 
-    @Column(nullable = false, length = 16)
+    @Column(length = 16)
     private String priority;
 
     @Column(length = 80)
