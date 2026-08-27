@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'report_details_screen.dart';
+
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
 
@@ -27,11 +29,9 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   }
 
   void _continueToNextStep() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Selected: $_selectedIssueType'),
-        backgroundColor: ReportIssueScreen._darkGreen,
-        behavior: SnackBarBehavior.floating,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ReportDetailsScreen(issueType: _selectedIssueType),
       ),
     );
   }

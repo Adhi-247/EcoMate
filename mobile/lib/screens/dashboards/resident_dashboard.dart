@@ -5,6 +5,7 @@ import '../login_screen.dart';
 import '../recycling/waste_segregation_guide_screen.dart';
 import '../collection_schedule_screen.dart';
 import '../report_issue_screen.dart';
+import '../my_reports_screen.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({super.key});
@@ -82,6 +83,17 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
         context,
         MaterialPageRoute(
           builder: (_) => const ReportIssueScreen(),
+        ),
+      );
+
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MyReportsScreen(),
         ),
       );
 

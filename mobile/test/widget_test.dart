@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/screens/report_issue_screen.dart';
 
 void main() {
-  testWidgets('selecting an issue type enables the Scrum-45 handoff', (tester) async {
+  testWidgets('selecting an issue type opens report details', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: ReportIssueScreen(),
@@ -24,8 +24,9 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.text('Next'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('Selected: Overflowing Bin'), findsOneWidget);
+    expect(find.text('Report Details'), findsOneWidget);
+    expect(find.text('Issue: Overflowing Bin'), findsOneWidget);
   });
 }
