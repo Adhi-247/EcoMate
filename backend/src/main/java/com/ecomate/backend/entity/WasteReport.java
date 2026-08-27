@@ -38,6 +38,12 @@ public class WasteReport {
     @Column(nullable = false, length = 24)
     private String status;
 
+    @Column(nullable = false, length = 16)
+    private String priority;
+
+    @Column(length = 80)
+    private String assignedTeam;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -57,6 +63,7 @@ public class WasteReport {
         this.description = description;
         this.photoData = photoData;
         this.status = "SUBMITTED";
+        this.priority = "MEDIUM";
         this.createdAt = LocalDateTime.now();
     }
 
@@ -71,5 +78,13 @@ public class WasteReport {
     public String getDescription() { return description; }
     public String getPhotoData() { return photoData; }
     public String getStatus() { return status; }
+    public String getPriority() { return priority; }
+    public String getAssignedTeam() { return assignedTeam; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public void updateAdminFields(String status, String priority, String assignedTeam) {
+        this.status = status;
+        this.priority = priority;
+        this.assignedTeam = assignedTeam;
+    }
 }

@@ -61,4 +61,32 @@ class WasteReportService {
     return (jsonDecode(response.body) as List)
         .cast<Map<String, dynamic>>();
   }
+
+  Future<List<Map<String, dynamic>>> getAdminReports() async {
+    final token = await _storage.read(key: 'token');
+    if (token == null || token.isEmpty) throw Exception('Please log in first.');
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/municipal/reports'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) throw Exception('Could not load reports.');
+    return (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> updateAdminReport({
+    required int id,
+    required String status,
+    required String priority,
+    required String assignedTeam,
+  }) async {
+    final token = await _storage.read(key: 'token');
+    if (token == null || token.isEmpty) throw Exception('Please log in first.');
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/municipal/reports/$id'),
+      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      body: jsonEncode({'status': status, 'priority': priority, 'assignedTeam': assignedTeam}),
+    );
+    if (response.statusCode != 200) throw Exception('Could not update report.');
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
 }

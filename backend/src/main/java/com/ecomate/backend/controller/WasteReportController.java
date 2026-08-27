@@ -30,4 +30,5 @@ public class WasteReportController {
     public List<WasteReportResponse> mine(@AuthenticationPrincipal Jwt jwt) {
         return service.findMine(jwt.getSubject());
     }
+
 }

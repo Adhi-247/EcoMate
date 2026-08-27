@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface WasteReportRepository extends JpaRepository<WasteReport, Long> {
     List<WasteReport> findByReporterEmailOrderByCreatedAtDesc(String reporterEmail);
+
+    List<WasteReport> findAllByOrderByCreatedAtDesc();
 }

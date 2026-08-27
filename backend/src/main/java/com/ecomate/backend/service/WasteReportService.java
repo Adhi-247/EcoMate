@@ -2,6 +2,7 @@ package com.ecomate.backend.service;
 
 import com.ecomate.backend.dto.CreateWasteReportRequest;
 import com.ecomate.backend.dto.WasteReportResponse;
+import com.ecomate.backend.dto.UpdateWasteReportRequest;
 import com.ecomate.backend.entity.WasteReport;
 import com.ecomate.backend.repository.WasteReportRepository;
 import org.springframework.stereotype.Service;
@@ -27,5 +28,17 @@ public class WasteReportService {
     public List<WasteReportResponse> findMine(String reporterEmail) {
         return repository.findByReporterEmailOrderByCreatedAtDesc(reporterEmail)
                 .stream().map(WasteReportResponse::from).toList();
+    }
+
+    public List<WasteReportResponse> findAll() {
+        return repository.findAllByOrderByCreatedAtDesc()
+                .stream().map(WasteReportResponse::from).toList();
+    }
+
+    public WasteReportResponse update(Long id, UpdateWasteReportRequest request) {
+        WasteReport report = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Report not found"));
+        report.updateAdminFields(request.status(), request.priority(), request.assignedTeam());
+        return WasteReportResponse.from(repository.save(report));
     }
 }

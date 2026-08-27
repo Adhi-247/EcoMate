@@ -14,6 +14,9 @@ public record WasteReportResponse(
         String description,
         boolean hasPhoto,
         String status,
+        String priority,
+        String assignedTeam,
+        String reporterEmail,
         LocalDateTime createdAt
 ) {
     public static WasteReportResponse from(WasteReport report) {
@@ -22,6 +25,7 @@ public record WasteReportResponse(
                 report.getLocation(), report.getLatitude(), report.getLongitude(),
                 report.getWasteCategory(), report.getDescription(),
                 report.getPhotoData() != null && !report.getPhotoData().isBlank(),
-                report.getStatus(), report.getCreatedAt());
+                report.getStatus(), report.getPriority(), report.getAssignedTeam(),
+                report.getReporterEmail(), report.getCreatedAt());
     }
 }
