@@ -5,6 +5,7 @@ import '../login_screen.dart';
 import '../recycling/waste_segregation_guide_screen.dart';
 import '../collection_schedule_screen.dart';
 import '../report_issue_screen.dart';
+import '../my_reports_screen.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({super.key});
@@ -82,6 +83,17 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
         context,
         MaterialPageRoute(
           builder: (_) => const ReportIssueScreen(),
+        ),
+      );
+
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MyReportsScreen(),
         ),
       );
 
@@ -638,7 +650,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
           const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 0.80,
+      childAspectRatio: 0.68,
       children: [
         _quickAction(
           icon: Icons.calendar_month_rounded,
@@ -668,7 +680,14 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
               Icons.warning_amber_rounded,
           title: 'Report\nIssue',
           color: const Color(0xFFFF7600),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ReportIssueScreen(),
+              ),
+            );
+          },
         ),
 
         _quickAction(
@@ -701,7 +720,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       child: Container(
         padding:
             const EdgeInsets.symmetric(
-          vertical: 12,
+              vertical: 8,
           horizontal: 7,
         ),
         decoration: BoxDecoration(
@@ -723,8 +742,8 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
               MainAxisAlignment.center,
           children: [
             Container(
-              width: 53,
-              height: 53,
+              width: 45,
+              height: 45,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius:
@@ -733,11 +752,11 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 28,
+                size: 24,
               ),
             ),
 
-            const SizedBox(height: 9),
+            const SizedBox(height: 6),
 
             Text(
               title,
