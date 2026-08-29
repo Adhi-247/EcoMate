@@ -312,7 +312,8 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      const Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             "Good morning, Alex!",
