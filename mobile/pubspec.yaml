@@ -94,4 +94,5 @@ flutter:
     - assets/images/onboarding_2.png
     - assets/images/login_background.jpg
     - assets/images/register_background.jpg
-    
+    - assets/images/resident_profile.png
+    - assets/images/organic_waste_bin.png
