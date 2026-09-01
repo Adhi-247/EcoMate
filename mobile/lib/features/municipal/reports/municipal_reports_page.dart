@@ -13,6 +13,7 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
   final _service = WasteReportService();
   late Future<List<Map<String, dynamic>>> _reports;
   String _filter = 'All';
+  bool _isReloading = false;
 
   @override
   void initState() {
@@ -21,12 +22,20 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
   }
 
   Future<void> _reload() async {
-    final reports = _service.getAdminReports();
-    if (!mounted) return;
-    setState(() {
-      _reports = reports;
-    });
-    await reports;
+    if (_isReloading) return; // Prevent multiple simultaneous requests
+    _isReloading = true;
+    try {
+      final reports = _service.getAdminReports();
+      if (!mounted) return;
+      setState(() {
+        _reports = reports;
+      });
+      await reports; // Wait for the reports to complete loading
+    } finally {
+      if (mounted) {
+        _isReloading = false;
+      }
+    }
   }
 
   Future<void> _editReport(Map<String, dynamic> report) async {
@@ -63,10 +72,22 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
     );
     if (result == null || !mounted) return;
     try {
-      await _service.updateAdminReport(id: (report['id'] as num).toInt(), status: result['status']!, priority: result['priority']!, assignedTeam: result['assignedTeam']!);
-      _reload();
+      final updated = await _service.updateAdminReport(
+        id: (report['id'] as num).toInt(),
+        status: result['status']!,
+        priority: result['priority']!,
+        assignedTeam: result['assignedTeam']!,
+      );
+      final currentReports = await _reports;
+      final updatedReports = currentReports.map((currentReport) {
+        return currentReport['id'] == updated['id'] ? updated : currentReport;
+      }).toList();
+      if (mounted) setState(() => _reports = Future.value(updatedReports));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report updated successfully')));
+      }
     } catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $error')));
     }
   }
 
@@ -91,8 +112,21 @@ class _MunicipalReportsPageState extends State<MunicipalReportsPage> {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _reports,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: MunicipalColors.secondaryGreen));
-          if (snapshot.hasError) return Center(child: TextButton(onPressed: _reload, child: const Text('Could not load reports. Retry')));
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: MunicipalColors.secondaryGreen));
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: MunicipalColors.error)),
+                  const SizedBox(height: 16),
+                  TextButton(onPressed: _reload, child: const Text('Retry')),
+                ],
+              ),
+            );
+          }
           final all = snapshot.data ?? [];
           final reports = _filter == 'All' ? all : all.where((item) => item['status'] == _filter).toList();
           return Column(children: [

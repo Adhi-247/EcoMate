@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'report_details_screen.dart';
 import '../services/waste_report_service.dart';
 
 class MyReportsScreen extends StatefulWidget {
@@ -31,6 +32,43 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       _reports = reports;
     });
     await reports;
+  }
+
+  Future<void> _editReport(Map<String, dynamic> report) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ReportDetailsScreen(
+        issueType: report['issueType']?.toString() ?? 'Other Issue',
+        report: report,
+      ),
+    ));
+    if (mounted) await _reload();
+  }
+
+  Future<void> _deleteReport(Map<String, dynamic> report) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete report?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _service.deleteMyReport((report['id'] as num).toInt());
+      if (!mounted) return;
+      final currentReports = await _reports;
+      setState(() {
+        _reports = Future.value(currentReports.where((item) => item['id'] != report['id']).toList());
+      });
+      messenger.showSnackBar(const SnackBar(content: Text('Report deleted')));
+    } catch (error) {
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 
   @override
@@ -65,7 +103,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
               padding: const EdgeInsets.all(16),
               itemCount: reports.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (_, index) => _ReportCard(report: reports[index]),
+              itemBuilder: (_, index) => _ReportCard(
+                report: reports[index],
+                onEdit: () => _editReport(reports[index]),
+                onDelete: () => _deleteReport(reports[index]),
+              ),
             ),
           );
         },
@@ -75,9 +117,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 }
 
 class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.report});
+  const _ReportCard({required this.report, required this.onEdit, required this.onDelete});
 
   final Map<String, dynamic> report;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +149,24 @@ class _ReportCard extends StatelessWidget {
           Row(children: [const Icon(Icons.location_on_outlined, size: 16, color: _MyReportsScreenState.secondaryText), const SizedBox(width: 4), Expanded(child: Text((report['location'] ?? '').toString(), style: const TextStyle(color: _MyReportsScreenState.secondaryText, fontSize: 12)))]),
           const SizedBox(height: 5),
           Text((report['createdAt'] ?? '').toString().replaceFirst('T', ' '), style: const TextStyle(color: _MyReportsScreenState.secondaryText, fontSize: 11)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Edit'),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: onDelete,
+                style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+                icon: const Icon(Icons.delete_outline, size: 16),
+                label: const Text('Delete'),
+              ),
+            ],
+          ),
         ],
       ),
     );

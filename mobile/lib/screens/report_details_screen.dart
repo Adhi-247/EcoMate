@@ -7,9 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import '../services/waste_report_service.dart';
 
 class ReportDetailsScreen extends StatefulWidget {
-  const ReportDetailsScreen({super.key, required this.issueType});
+  const ReportDetailsScreen({super.key, required this.issueType, this.report});
 
   final String issueType;
+  final Map<String, dynamic>? report;
 
   @override
   State<ReportDetailsScreen> createState() => _ReportDetailsScreenState();
@@ -33,6 +34,19 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   bool _submitting = false;
   bool _reviewing = false;
 
+  bool get _isEditing => widget.report != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final report = widget.report;
+    if (report != null) {
+      _locationController.text = report['location']?.toString() ?? '';
+      _descriptionController.text = report['description']?.toString() ?? '';
+      _category = report['wasteCategory']?.toString() ?? _category;
+    }
+  }
+
   @override
   void dispose() {
     _locationController.dispose();
@@ -41,7 +55,12 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1280,
+      maxHeight: 1280,
+      imageQuality: 60,
+    );
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -57,20 +76,29 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     }
     setState(() => _submitting = true);
     try {
-      final result = await _service.submitReport(
-        issueType: widget.issueType,
-        location: _locationController.text.trim(),
-        category: _category,
-        description: _descriptionController.text.trim(),
-        photoData: _photoData,
-      );
+      final result = _isEditing
+          ? await _service.updateMyReport(
+              id: (widget.report!['id'] as num).toInt(),
+              issueType: widget.issueType,
+              location: _locationController.text.trim(),
+              category: _category,
+              description: _descriptionController.text.trim(),
+              photoData: _photoData,
+            )
+          : await _service.submitReport(
+              issueType: widget.issueType,
+              location: _locationController.text.trim(),
+              category: _category,
+              description: _descriptionController.text.trim(),
+              photoData: _photoData,
+            );
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: const Text('Report submitted'),
-          content: Text('Reference number: ${result['referenceNumber']}'),
+          title: Text(_isEditing ? 'Report updated' : 'Report submitted'),
+          content: Text(_isEditing ? 'Your report was updated successfully.' : 'Reference number: ${result['referenceNumber']}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -79,7 +107,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
           ],
         ),
       );
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) _showMessage(error.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -107,7 +135,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         backgroundColor: background,
         foregroundColor: darkGreen,
         elevation: 0,
-        title: Text(_reviewing ? 'Review Report' : 'Report Details', style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
+        title: Text(_reviewing ? (_isEditing ? 'Review Edit' : 'Review Report') : (_isEditing ? 'Edit Report' : 'Report Details'), style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
         centerTitle: true,
       ),
       body: ListView(
@@ -192,7 +220,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
           children: [
             Expanded(child: OutlinedButton(onPressed: () => setState(() => _reviewing = false), child: const Text('Edit'))),
             const SizedBox(width: 12),
-            Expanded(child: ElevatedButton(onPressed: _submitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: darkGreen, foregroundColor: Colors.white), child: _submitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Report'))),
+            Expanded(child: ElevatedButton(onPressed: _submitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: darkGreen, foregroundColor: Colors.white), child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(_isEditing ? 'Save Changes' : 'Submit Report'))),
           ],
         ),
       ],

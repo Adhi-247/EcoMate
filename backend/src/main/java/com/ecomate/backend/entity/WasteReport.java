@@ -86,4 +86,15 @@ public class WasteReport {
         this.priority = priority;
         this.assignedTeam = assignedTeam;
     }
+
+    public void updateResidentFields(String issueType, String location, String wasteCategory,
+                                     String description, String photoData) {
+        this.issueType = issueType;
+        this.location = location;
+        this.wasteCategory = wasteCategory;
+        this.description = description;
+        if (photoData != null) {
+            this.photoData = photoData;
+        }
+    }
 }
