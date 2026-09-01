@@ -5,6 +5,7 @@ import '../theme/municipal_colors.dart';
 import 'widgets/summary_card.dart';
 import 'widgets/schedule_card.dart';
 import 'widgets/quick_actions.dart';
+import 'widgets/live_map_preview_card.dart';
 
 class MunicipalDashboardPage extends StatefulWidget {
   final Function(int) onTabChange;
@@ -139,6 +140,9 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
                               _buildKeyStatisticsHeader(),
                               const SizedBox(height: 14),
                               _buildSummaryGrid(),
+                              const SizedBox(height: 24),
+                              
+                              const LiveMapPreviewCard(),
                               const SizedBox(height: 24),
                               
                               ScheduleCard(
@@ -345,52 +349,7 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
               ],
             ),
           ),
-          
-          // Divider
-          Container(
-            height: 1,
-            color: Colors.white.withValues(alpha: 0.15),
-          ),
-          
-          // Bottom summary bar
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildBannerMetric(
-                    icon: Icons.delete_outline_rounded,
-                    value: "${_summaryData!.totalCollectionsToday}",
-                    label: "Collections\nToday",
-                  ),
-                ),
-                _buildMetricDivider(),
-                Expanded(
-                  child: _buildBannerMetric(
-                    icon: Icons.local_shipping_outlined,
-                    value: "${_summaryData!.activeCollectors}",
-                    label: "Active\nTrucks",
-                  ),
-                ),
-                _buildMetricDivider(),
-                Expanded(
-                  child: _buildBannerMetric(
-                    icon: Icons.forum_outlined,
-                    value: "${_summaryData!.pendingComplaints}",
-                    label: "Complaints\nOpen",
-                  ),
-                ),
-                _buildMetricDivider(),
-                Expanded(
-                  child: _buildBannerMetric(
-                    icon: Icons.eco_outlined,
-                    value: "${_summaryData!.recyclingRate}%",
-                    label: "Recycling\nRate",
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // End of banner
         ],
       ),
     );
@@ -517,52 +476,6 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
       ),
     );
   }
-
-  Widget _buildMetricDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      color: Colors.white.withValues(alpha: 0.2),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-    );
-  }
-
-  Widget _buildBannerMetric({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(width: 5),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            fontSize: 10,
-            height: 1.2,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildKeyStatisticsHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -610,7 +523,7 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 0.92,
+      childAspectRatio: 2.7,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       children: [
