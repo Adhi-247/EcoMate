@@ -49,7 +49,8 @@ public class WasteReportService {
         WasteReport report = repository.findByIdAndReporterEmail(id, reporterEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found"));
         report.updateResidentFields(request.issueType(), request.location(),
-                request.wasteCategory(), request.description(), request.photoData());
+            request.wasteCategory(), request.description(), request.latitude(),
+            request.longitude(), request.photoData());
         return WasteReportResponse.from(repository.save(report));
     }
 
