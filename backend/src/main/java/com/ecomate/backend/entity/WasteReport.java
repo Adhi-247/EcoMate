@@ -90,6 +90,7 @@ public class WasteReport {
     public void updateResidentFields(String issueType, String location, String wasteCategory,
                                      String description, Double latitude, Double longitude,
                                      String photoData) {
+                                     String description, String photoData) {
         this.issueType = issueType;
         this.location = location;
         this.wasteCategory = wasteCategory;
