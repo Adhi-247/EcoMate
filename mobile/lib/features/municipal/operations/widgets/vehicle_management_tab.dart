@@ -182,7 +182,7 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
 
                       // Vehicle Type dropdown
                       DropdownButtonFormField<String>(
-                        initialValue: selectedType,
+                        value: selectedType,
                         decoration: InputDecoration(
                           labelText: 'Vehicle Type',
                           border: OutlineInputBorder(
@@ -205,7 +205,7 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
 
                       // Status dropdown
                       DropdownButtonFormField<String>(
-                        initialValue: selectedStatus,
+                        value: selectedStatus,
                         decoration: InputDecoration(
                           labelText: 'Availability Status',
                           border: OutlineInputBorder(
@@ -337,7 +337,7 @@ class _VehicleManagementTabState extends State<VehicleManagementTab> {
                           title: const Text('Active Fleet Resource'),
                           subtitle: const Text('Deactivation marks vehicle as inactive'),
                           value: isActive,
-                          activeThumbColor: MunicipalColors.secondaryGreen,
+                          activeColor: MunicipalColors.secondaryGreen,
                           onChanged: (value) {
                             setModalState(() => isActive = value);
                           },
