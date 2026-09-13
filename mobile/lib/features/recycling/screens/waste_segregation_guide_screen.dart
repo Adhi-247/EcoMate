@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/waste_category.dart';
 import '../services/recycling_service.dart';
 import 'category_detail_screen.dart';
+import 'recycling_centres_screen.dart';
 
 class WasteSegregationGuideScreen extends StatefulWidget {
   const WasteSegregationGuideScreen({super.key});
@@ -70,6 +71,20 @@ class _WasteSegregationGuideScreenState
             fontSize: 20,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.location_on_outlined, color: Color(0xFF1F5520)),
+            tooltip: 'Nearby Recycling Centres',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RecyclingCentresScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(

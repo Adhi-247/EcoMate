@@ -122,11 +122,12 @@ public class RecyclingCentreService {
         centre.setAddress(request.getAddress());
         centre.setCity(request.getCity());
         centre.setContactNumber(request.getContactNumber());
-        centre.setEmail(request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail() : (createdByEmail != null ? createdByEmail : ""));
-        centre.setOfficerEmail(createdByEmail != null && !createdByEmail.isBlank() ? createdByEmail : "council@ecomate.lk");
-        if (createdByEmail != null && !createdByEmail.isBlank()) {
-            userRepository.findByEmail(createdByEmail).ifPresent(centre::setOfficer);
-        }
+        String assignedOfficerEmail = request.getEmail() != null && !request.getEmail().isBlank()
+                ? request.getEmail().trim()
+                : (createdByEmail != null ? createdByEmail : "council@ecomate.lk");
+        centre.setEmail(assignedOfficerEmail);
+        centre.setOfficerEmail(assignedOfficerEmail);
+        userRepository.findByEmail(assignedOfficerEmail).ifPresent(centre::setOfficer);
         if (request.getOperatingHours() != null && !request.getOperatingHours().isBlank()) {
             centre.setOperatingHours(request.getOperatingHours());
         }

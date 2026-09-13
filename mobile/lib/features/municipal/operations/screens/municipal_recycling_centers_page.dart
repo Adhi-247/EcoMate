@@ -141,7 +141,7 @@ class _MunicipalRecyclingCentersPageState extends State<MunicipalRecyclingCenter
                     const SizedBox(height: 12),
                     _buildFormField(phoneController, 'Contact Phone *', Icons.phone_outlined, keyboardType: TextInputType.phone),
                     const SizedBox(height: 12),
-                    _buildFormField(emailController, 'Email Address', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                    _buildFormField(emailController, 'Officer Login Email (e.g. officer@gmail.com) *', Icons.badge_outlined, keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 12),
                     _buildFormField(hoursController, 'Operating Hours', Icons.access_time_rounded),
                     const SizedBox(height: 12),
@@ -200,11 +200,12 @@ class _MunicipalRecyclingCentersPageState extends State<MunicipalRecyclingCenter
                               final city = cityController.text.trim();
                               final address = addressController.text.trim();
                               final phone = phoneController.text.trim();
+                              final officerEmail = emailController.text.trim();
 
-                              if (name.isEmpty || city.isEmpty || address.isEmpty || phone.isEmpty) {
+                              if (name.isEmpty || city.isEmpty || address.isEmpty || phone.isEmpty || officerEmail.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Please fill all required fields (*)'),
+                                    content: Text('Please fill all required fields (*) including Officer Email'),
                                     backgroundColor: MunicipalColors.error,
                                   ),
                                 );
@@ -215,14 +216,13 @@ class _MunicipalRecyclingCentersPageState extends State<MunicipalRecyclingCenter
 
                               final newCentre = RecyclingCentre(
                                 id: '',
+                                officerEmail: officerEmail,
                                 name: name,
                                 address: address,
                                 city: city,
                                 distanceKm: 1.5,
                                 contactNumber: phone,
-                                email: emailController.text.trim().isNotEmpty
-                                    ? emailController.text.trim()
-                                    : 'centre@ecomate.lk',
+                                email: officerEmail,
                                 operatingHours: hoursController.text.trim().isNotEmpty
                                     ? hoursController.text.trim()
                                     : 'Mon - Sat: 8:00 AM - 5:30 PM',
