@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mobile/screens/report_issue_screen.dart';
 import 'package:mobile/services/report_filters.dart';
+import 'package:mobile/services/report_review.dart';
 
 void main() {
   testWidgets('selecting an issue type opens report details', (tester) async {
@@ -43,5 +44,20 @@ void main() {
 
     final resolved = filterReports(reports, query: '', status: 'RESOLVED');
     expect(resolved.single['id'], 2);
+  });
+
+  test('review summary includes critical report details for verification', () {
+    final summary = buildReviewSummary({
+      'referenceNumber': 'RPT-1001',
+      'issueType': 'Illegal Dumping',
+      'location': 'Lake Road',
+      'status': 'SUBMITTED',
+      'priority': 'HIGH',
+    });
+
+    expect(summary, contains('RPT-1001'));
+    expect(summary, contains('Illegal Dumping'));
+    expect(summary, contains('Lake Road'));
+    expect(summary, contains('HIGH'));
   });
 }

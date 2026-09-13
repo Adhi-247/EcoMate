@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/report_filters.dart';
+import '../../../services/report_review.dart';
 import '../../../services/waste_report_service.dart';
 import '../theme/municipal_colors.dart';
 import 'report_location_map_page.dart';
@@ -53,6 +54,20 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(report['issueType']?.toString() ?? 'Report', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MunicipalColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: MunicipalColors.border),
+              ),
+              child: Text(
+                buildReviewSummary(report),
+                style: const TextStyle(color: MunicipalColors.primaryText, height: 1.5, fontSize: 12),
+              ),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: status,
