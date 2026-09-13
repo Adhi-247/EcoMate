@@ -54,4 +54,61 @@ class WasteDeliveryRecord {
       'notes': notes,
     };
   }
+
+  /// Calculates eco reward credits based on material category and quantity (SCRUM-57)
+  int get ecoPoints {
+    final lower = materialType.toLowerCase();
+    double multiplier = 10;
+    if (lower.contains('plastic')) {
+      multiplier = 15;
+    } else if (lower.contains('metal') || lower.contains('aluminum')) {
+      multiplier = 25;
+    } else if (lower.contains('e-waste') || lower.contains('electronic')) {
+      multiplier = 30;
+    } else if (lower.contains('paper') || lower.contains('cardboard')) {
+      multiplier = 10;
+    } else if (lower.contains('glass')) {
+      multiplier = 8;
+    } else if (lower.contains('tetra')) {
+      multiplier = 12;
+    } else if (lower.contains('organic')) {
+      multiplier = 5;
+    }
+    return (weightKg * multiplier).round();
+  }
+
+  /// Calculates estimated CO2 emissions avoided (kg) (SCRUM-57)
+  double get co2SavedKg {
+    final lower = materialType.toLowerCase();
+    double multiplier = 1.2;
+    if (lower.contains('plastic')) {
+      multiplier = 1.8;
+    } else if (lower.contains('metal') || lower.contains('aluminum')) {
+      multiplier = 3.5;
+    } else if (lower.contains('e-waste') || lower.contains('electronic')) {
+      multiplier = 4.0;
+    } else if (lower.contains('paper') || lower.contains('cardboard')) {
+      multiplier = 1.2;
+    } else if (lower.contains('glass')) {
+      multiplier = 0.8;
+    } else if (lower.contains('tetra')) {
+      multiplier = 1.0;
+    } else if (lower.contains('organic')) {
+      multiplier = 0.5;
+    }
+    return weightKg * multiplier;
+  }
+
+  /// Returns official recycling classification code
+  String get materialCode {
+    final lower = materialType.toLowerCase();
+    if (lower.contains('plastic')) return 'PET #1';
+    if (lower.contains('metal') || lower.contains('aluminum')) return 'ALU #41';
+    if (lower.contains('e-waste') || lower.contains('electronic')) return 'WEEE';
+    if (lower.contains('paper') || lower.contains('cardboard')) return 'PAP #20';
+    if (lower.contains('glass')) return 'GL #70';
+    if (lower.contains('tetra')) return 'C/PAP #84';
+    if (lower.contains('organic')) return 'ORG';
+    return 'REC';
+  }
 }

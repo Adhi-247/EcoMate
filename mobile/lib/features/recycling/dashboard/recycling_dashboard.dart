@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/material_item.dart';
 import '../models/recycling_centre.dart';
 import '../models/waste_delivery_record.dart';
@@ -638,6 +638,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                     TextField(
                       controller: weightController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setModalState(() {}),
                       decoration: InputDecoration(
                         labelText: 'Quantity / Weight (kg) *',
                         hintText: 'e.g. 15.5',
@@ -661,6 +662,92 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Quick Quantity Presets (SCRUM-57)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [1, 5, 10, 25, 50].map((addAmount) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ActionChip(
+                              label: Text('+$addAmount kg', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                              backgroundColor: RecyclingColors.softGreen.withValues(alpha: 0.6),
+                              side: const BorderSide(color: RecyclingColors.cardBorder),
+                              labelStyle: const TextStyle(color: RecyclingColors.primaryGreen),
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              onPressed: () {
+                                final current = double.tryParse(weightController.text.trim()) ?? 0.0;
+                                final updated = current + addAmount;
+                                weightController.text = updated % 1 == 0 ? updated.toInt().toString() : updated.toStringAsFixed(1);
+                                setModalState(() {});
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Live Eco Credits & Impact Preview (SCRUM-57)
+                    Builder(
+                      builder: (context) {
+                        final currentWeight = double.tryParse(weightController.text.trim()) ?? 0.0;
+                        final previewRecord = WasteDeliveryRecord(
+                          id: '',
+                          materialType: selectedMaterial,
+                          weightKg: currentWeight,
+                          deliveredBy: '',
+                          contactNumber: '',
+                          dateTime: DateTime.now(),
+                          notes: '',
+                        );
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: RecyclingColors.softGreen.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: RecyclingColors.cardBorder),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: RecyclingColors.primaryGreen,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      previewRecord.materialCode,
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '+${previewRecord.ecoPoints} Eco-Credits',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: RecyclingColors.primaryGreen,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '~${previewRecord.co2SavedKg.toStringAsFixed(1)} kg CO₂ avoided',
+                                style: const TextStyle(fontSize: 11, color: RecyclingColors.secondaryText),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 14),
 
@@ -798,9 +885,13 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
               ),
               const Divider(color: RecyclingColors.cardBorder),
               const SizedBox(height: 8),
-              _buildDetailRow(Icons.recycling_rounded, 'Material', record.materialType),
+              _buildDetailRow(Icons.recycling_rounded, 'Material', '${record.materialType} (${record.materialCode})'),
               const SizedBox(height: 10),
               _buildDetailRow(Icons.scale_rounded, 'Weight', '${record.weightKg.toStringAsFixed(1)} kg'),
+              const SizedBox(height: 10),
+              _buildDetailRow(Icons.stars_rounded, 'Eco-Credits', '+${record.ecoPoints} points'),
+              const SizedBox(height: 10),
+              _buildDetailRow(Icons.energy_savings_leaf_rounded, 'CO₂ Avoided', '~${record.co2SavedKg.toStringAsFixed(1)} kg CO₂'),
               const SizedBox(height: 10),
               _buildDetailRow(Icons.person_outline, 'Delivered By', record.deliveredBy),
               if (record.contactNumber.isNotEmpty) ...[
@@ -1674,15 +1765,34 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    record.materialType,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13.5,
-                      color: RecyclingColors.darkText,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          record.materialType,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                            color: RecyclingColors.darkText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: RecyclingColors.softGreen,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: RecyclingColors.cardBorder, width: 0.8),
+                        ),
+                        child: Text(
+                          record.materialCode,
+                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: RecyclingColors.primaryGreen),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1692,9 +1802,18 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    _formatDeliveryDate(record.dateTime),
-                    style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+                  Row(
+                    children: [
+                      Text(
+                        _formatDeliveryDate(record.dateTime),
+                        style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '+${record.ecoPoints} pts',
+                        style: const TextStyle(fontSize: 10.5, color: RecyclingColors.primaryGreen, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ],
               ),
