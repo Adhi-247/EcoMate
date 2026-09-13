@@ -1,29 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/material_item.dart';
 import '../models/recycling_centre.dart';
+import '../models/waste_delivery_record.dart';
 import '../../../services/auth_service.dart';
 import '../services/recycling_service.dart';
 import '../../../screens/login_screen.dart';
-
-class WasteDeliveryRecord {
-  final String id;
-  final String materialType;
-  final double weightKg;
-  final String deliveredBy;
-  final String contactNumber;
-  final DateTime dateTime;
-  final String notes;
-
-  WasteDeliveryRecord({
-    required this.id,
-    required this.materialType,
-    required this.weightKg,
-    required this.deliveredBy,
-    required this.contactNumber,
-    required this.dateTime,
-    required this.notes,
-  });
-}
 
 class RecyclingDashboard extends StatefulWidget {
   const RecyclingDashboard({super.key});
@@ -42,45 +23,8 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
   List<MaterialItem> _centreMaterials = [];
   bool _isLoading = true;
 
-  // Recyclable Waste Delivery Records
-  final List<WasteDeliveryRecord> _deliveryRecords = [
-    WasteDeliveryRecord(
-      id: 'DEL-1048',
-      materialType: 'Plastic Bottles (PET)',
-      weightKg: 24.5,
-      deliveredBy: 'Kamal Perera',
-      contactNumber: '077-1234567',
-      dateTime: DateTime.now().subtract(const Duration(hours: 2)),
-      notes: 'Clean and sorted PET bottles',
-    ),
-    WasteDeliveryRecord(
-      id: 'DEL-1047',
-      materialType: 'Cardboard & Paper',
-      weightKg: 58.0,
-      deliveredBy: 'Colombo Green Eco',
-      contactNumber: '011-2345678',
-      dateTime: DateTime.now().subtract(const Duration(hours: 4, minutes: 15)),
-      notes: 'Bundled and dry packaging boxes',
-    ),
-    WasteDeliveryRecord(
-      id: 'DEL-1046',
-      materialType: 'Glass Bottles',
-      weightKg: 18.2,
-      deliveredBy: 'Sunil Fernando',
-      contactNumber: '071-9876543',
-      dateTime: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-      notes: 'Separated by clear and amber glass',
-    ),
-    WasteDeliveryRecord(
-      id: 'DEL-1045',
-      materialType: 'Aluminum & Metal Cans',
-      weightKg: 12.0,
-      deliveredBy: 'Nimali Silva',
-      contactNumber: '076-5544332',
-      dateTime: DateTime.now().subtract(const Duration(days: 2, hours: 5)),
-      notes: 'Rinsed beverage cans',
-    ),
-  ];
+  // Recyclable Waste Delivery Records (Loaded from live Supabase backend)
+  List<WasteDeliveryRecord> _deliveryRecords = [];
 
   @override
   void initState() {
@@ -104,6 +48,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
     final centre = await _recyclingService.getCentreForOfficer(activeEmail);
     final materials = await _recyclingService.getCentreMaterialsForOfficer(activeEmail);
+    final deliveries = await _recyclingService.fetchDeliveries(centreId: centre?.id);
 
     if (mounted) {
       setState(() {
@@ -111,6 +56,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
         _officerName = activeName;
         _myCentre = centre;
         _centreMaterials = materials;
+        _deliveryRecords = deliveries;
         _isLoading = false;
       });
     }
@@ -547,7 +493,9 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                             : 'Resident Drop-off';
 
                         final newRecord = WasteDeliveryRecord(
-                          id: 'DEL-${1000 + _deliveryRecords.length + 1}',
+                          id: '',
+                          recyclingCentreId: _myCentre?.id,
+                          recyclingCentreName: _myCentre?.name,
                           materialType: selectedMaterial,
                           weightKg: weight,
                           deliveredBy: deliverer,
@@ -558,10 +506,13 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                               : 'Standard delivery',
                         );
 
+                        final saved = await _recyclingService.recordDelivery(newRecord);
+
                         setState(() {
-                          _deliveryRecords.insert(0, newRecord);
+                          _deliveryRecords.insert(0, saved ?? newRecord);
                         });
 
+                        if (!context.mounted) return;
                         Navigator.pop(context);
 
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -571,7 +522,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                 const Icon(Icons.check_circle, color: Colors.white),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text('Delivery ${newRecord.id} recorded: ${weight.toStringAsFixed(1)} kg $selectedMaterial'),
+                                  child: Text('Delivery ${(saved ?? newRecord).id} recorded: ${weight.toStringAsFixed(1)} kg $selectedMaterial'),
                                 ),
                               ],
                             ),

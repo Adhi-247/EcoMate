@@ -16,6 +16,7 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
 
   List<RecyclingCentre> _displayedCentres = [];
   String _selectedMaterial = 'All';
+  bool _isLoading = false;
 
   final List<String> _materialOptions = [
     'All',
@@ -39,13 +40,18 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
     super.dispose();
   }
 
-  void _fetchCentres() {
-    setState(() {
-      _displayedCentres = _recyclingService.getRecyclingCentres(
-        query: _searchController.text,
-        materialFilter: _selectedMaterial,
-      );
-    });
+  Future<void> _fetchCentres() async {
+    setState(() => _isLoading = true);
+    final centres = await _recyclingService.fetchRecyclingCentres(
+      query: _searchController.text,
+      materialFilter: _selectedMaterial,
+    );
+    if (mounted) {
+      setState(() {
+        _displayedCentres = centres;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -180,35 +186,39 @@ class _RecyclingCentresScreenState extends State<RecyclingCentresScreen> {
 
                 // Centres List
                 Expanded(
-                  child: _displayedCentres.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.location_off_rounded,
-                                size: 56,
-                                color: Colors.grey.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'No recycling centres found matching your search',
-                                style: TextStyle(
-                                  color: Color(0xFF69756D),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Color(0xFF1F5520)),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(20),
-                          itemCount: _displayedCentres.length,
-                          itemBuilder: (context, index) {
-                            final centre = _displayedCentres[index];
-                            return _buildCentreCard(centre);
-                          },
-                        ),
+                      : _displayedCentres.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.location_off_rounded,
+                                    size: 56,
+                                    color: Colors.grey.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'No recycling centres found matching your search',
+                                    style: TextStyle(
+                                      color: Color(0xFF69756D),
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _displayedCentres.length,
+                              itemBuilder: (context, index) {
+                                final centre = _displayedCentres[index];
+                                return _buildCentreCard(centre);
+                              },
+                            ),
                 ),
               ],
             ),
