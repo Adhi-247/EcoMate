@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/material_item.dart';
 import '../models/recycling_centre.dart';
-import '../models/waste_category.dart';
-import 'auth_service.dart';
+import '../../../models/waste_category.dart';
+import '../../../services/auth_service.dart';
 
 class RecyclingService {
   static const String baseUrl = 'http://localhost:8080';

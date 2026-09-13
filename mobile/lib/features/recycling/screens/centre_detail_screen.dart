@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/recycling_centre.dart';
+import '../models/recycling_centre.dart';
 
 class CentreDetailScreen extends StatelessWidget {
   final RecyclingCentre centre;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/municipal_colors.dart';
-import '../../../../screens/recycling/waste_segregation_guide_screen.dart';
+import '../../../recycling/screens/waste_segregation_guide_screen.dart';
 import '../screens/collection_performance_page.dart';
 import '../../reports/complaints_requests_page.dart';
 

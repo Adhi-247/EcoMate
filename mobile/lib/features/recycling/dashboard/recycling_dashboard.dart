@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../models/material_item.dart';
-import '../../models/recycling_centre.dart';
-import '../../services/auth_service.dart';
-import '../../services/recycling_service.dart';
-import '../login_screen.dart';
+import '../models/material_item.dart';
+import '../models/recycling_centre.dart';
+import '../../../services/auth_service.dart';
+import '../services/recycling_service.dart';
+import '../../../screens/login_screen.dart';
 
 class WasteDeliveryRecord {
   final String id;

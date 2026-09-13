@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/waste_category.dart';
+import '../../../models/waste_category.dart';
 
 class CategoryDetailScreen extends StatelessWidget {
   final WasteCategory category;

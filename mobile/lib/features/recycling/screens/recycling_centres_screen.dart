@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/recycling_centre.dart';
-import '../../services/recycling_service.dart';
+import '../models/recycling_centre.dart';
+import '../services/recycling_service.dart';
 import 'centre_detail_screen.dart';
 
 class RecyclingCentresScreen extends StatefulWidget {

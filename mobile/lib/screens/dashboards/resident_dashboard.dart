@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
-import '../recycling/waste_segregation_guide_screen.dart';
+import '../../features/recycling/screens/waste_segregation_guide_screen.dart';
 import '../collection_schedule_screen.dart';
 import '../report_issue_screen.dart';
 import '../my_reports_screen.dart';

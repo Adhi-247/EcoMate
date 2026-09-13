@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/waste_category.dart';
-import '../../services/recycling_service.dart';
+import '../../../models/waste_category.dart';
+import '../services/recycling_service.dart';
 import 'category_detail_screen.dart';
 
 class WasteSegregationGuideScreen extends StatefulWidget {
