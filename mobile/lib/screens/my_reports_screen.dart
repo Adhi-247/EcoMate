@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'report_details_screen.dart';
+import 'report_status_screen.dart';
 import '../services/waste_report_service.dart';
 
 class MyReportsScreen extends StatefulWidget {
@@ -107,6 +108,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                 report: reports[index],
                 onEdit: () => _editReport(reports[index]),
                 onDelete: () => _deleteReport(reports[index]),
+                onViewStatus: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ReportStatusScreen(report: reports[index]),
+                  ),
+                ),
               ),
             ),
           );
@@ -117,11 +123,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 }
 
 class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.report, required this.onEdit, required this.onDelete});
+  const _ReportCard({required this.report, required this.onEdit, required this.onDelete, required this.onViewStatus});
 
   final Map<String, dynamic> report;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onViewStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -153,6 +160,12 @@ class _ReportCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              OutlinedButton.icon(
+                onPressed: onViewStatus,
+                icon: const Icon(Icons.timeline_outlined, size: 16),
+                label: const Text('Track'),
+              ),
+              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 16),
