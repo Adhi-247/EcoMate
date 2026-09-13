@@ -476,7 +476,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
 
                     // Submit Button
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final weight = double.tryParse(weightController.text.trim());
                         if (weight == null || weight <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
