@@ -29,6 +29,10 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
   List<WasteDeliveryRecord> _deliveryRecords = [];
   final TextEditingController _deliverySearchController = TextEditingController();
 
+  // Activity Monitoring Filters (SCRUM-60)
+  String _selectedPeriodFilter = 'All'; // 'All', 'Today', 'This Week', 'This Month'
+  String _selectedMaterialFilter = 'All'; // 'All', 'Plastic', 'Paper', 'Glass', 'Metal', 'E-Waste', 'Organic'
+
   @override
   void initState() {
     super.initState();
@@ -1856,15 +1860,49 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
   // =========================================================================
 
   Widget _buildDeliveriesTab() {
+    final now = DateTime.now();
     final query = _deliverySearchController.text.trim().toLowerCase();
+
     final filtered = _deliveryRecords.where((r) {
-      if (query.isEmpty) return true;
-      return r.materialType.toLowerCase().contains(query) ||
+      // 1. Text Query Filter
+      final matchesQuery = query.isEmpty ||
+          r.materialType.toLowerCase().contains(query) ||
           r.deliveredBy.toLowerCase().contains(query) ||
           r.id.toLowerCase().contains(query);
+      if (!matchesQuery) return false;
+
+      // 2. Material Filter
+      if (_selectedMaterialFilter != 'All') {
+        if (!r.materialType.toLowerCase().contains(_selectedMaterialFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 3. Period Filter (SCRUM-60)
+      if (_selectedPeriodFilter == 'Today') {
+        final isToday = r.dateTime.year == now.year &&
+            r.dateTime.month == now.month &&
+            r.dateTime.day == now.day;
+        if (!isToday) return false;
+      } else if (_selectedPeriodFilter == 'This Week') {
+        final diffDays = now.difference(r.dateTime).inDays;
+        if (diffDays > 7 || diffDays < 0) return false;
+      } else if (_selectedPeriodFilter == 'This Month') {
+        final isThisMonth = r.dateTime.year == now.year &&
+            r.dateTime.month == now.month;
+        if (!isThisMonth) return false;
+      }
+
+      return true;
     }).toList();
 
     final totalWeight = filtered.fold<double>(0.0, (sum, r) => sum + r.weightKg);
+    final totalPoints = filtered.fold<int>(0, (sum, r) => sum + r.ecoPoints);
+    final totalCo2 = filtered.fold<double>(0.0, (sum, r) => sum + r.co2SavedKg);
+    final avgWeight = filtered.isNotEmpty ? totalWeight / filtered.length : 0.0;
+
+    final periodOptions = ['All', 'Today', 'This Week', 'This Month'];
+    final materialFilterOptions = ['All', 'Plastic', 'Paper', 'Glass', 'Metal', 'E-Waste', 'Organic'];
 
     return Scaffold(
       backgroundColor: RecyclingColors.pageBg,
@@ -1874,117 +1912,379 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('Record Delivery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 90),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 750),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _deliverySearchController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search material, resident, batch ID...',
-                    hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-                    prefixIcon: const Icon(Icons.search_rounded, color: RecyclingColors.primaryGreen),
-                    suffixIcon: _deliverySearchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _deliverySearchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: RecyclingColors.cardBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: RecyclingColors.cardBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: RecyclingColors.primaryGreen, width: 1.5),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: RecyclingColors.cardBorder),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: RefreshIndicator(
+        onRefresh: _loadOfficerData,
+        color: RecyclingColors.primaryGreen,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 90),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 750),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search Bar & Analytics Trigger
+                  Row(
                     children: [
-                      Text(
-                        'Total: ${filtered.length} entries',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: RecyclingColors.darkText,
+                      Expanded(
+                        child: TextField(
+                          controller: _deliverySearchController,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            hintText: 'Search material, resident, ID...',
+                            hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                            prefixIcon: const Icon(Icons.search_rounded, color: RecyclingColors.primaryGreen),
+                            suffixIcon: _deliverySearchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, color: Colors.grey),
+                                    onPressed: () {
+                                      _deliverySearchController.clear();
+                                      setState(() {});
+                                    },
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: RecyclingColors.cardBorder),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: RecyclingColors.cardBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: RecyclingColors.primaryGreen, width: 1.5),
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        'Combined: ${totalWeight.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: RecyclingColors.primaryGreen,
+                      const SizedBox(width: 8),
+                      Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: () => _openActivityAnalyticsModal(filtered),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: RecyclingColors.cardBorder),
+                            ),
+                            child: const Icon(Icons.bar_chart_rounded, color: RecyclingColors.primaryGreen, size: 24),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 10),
 
-                const SizedBox(height: 12),
+                  // Period Filter Tabs (SCRUM-60: Monitoring Timeframes)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: periodOptions.map((period) {
+                        final isSelected = _selectedPeriodFilter == period;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(period),
+                            selected: isSelected,
+                            onSelected: (val) {
+                              if (val) setState(() => _selectedPeriodFilter = period);
+                            },
+                            selectedColor: RecyclingColors.primaryGreen,
+                            backgroundColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : RecyclingColors.darkText,
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            side: BorderSide(
+                              color: isSelected ? RecyclingColors.primaryGreen : RecyclingColors.cardBorder,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
 
-                if (filtered.isEmpty)
+                  // Material Category Filter Chips (SCRUM-60)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: materialFilterOptions.map((mat) {
+                        final isSelected = _selectedMaterialFilter == mat;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: FilterChip(
+                            label: Text(mat),
+                            selected: isSelected,
+                            onSelected: (val) {
+                              setState(() => _selectedMaterialFilter = mat);
+                            },
+                            selectedColor: RecyclingColors.softGreen,
+                            backgroundColor: Colors.white,
+                            checkmarkColor: RecyclingColors.primaryGreen,
+                            labelStyle: TextStyle(
+                              color: isSelected ? RecyclingColors.primaryGreen : RecyclingColors.secondaryText,
+                              fontSize: 11.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            side: BorderSide(
+                              color: isSelected ? RecyclingColors.primaryGreen : RecyclingColors.cardBorder,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Activity Monitoring Analytics Card (SCRUM-60 KPI Bar)
                   Container(
-                    padding: const EdgeInsets.all(36),
-                    alignment: Alignment.center,
-                    child: const Column(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: RecyclingColors.cardBorder),
+                    ),
+                    child: Column(
                       children: [
-                        Icon(Icons.inventory_2_outlined, size: 46, color: Colors.grey),
-                        SizedBox(height: 10),
-                        Text(
-                          'No deliveries match your search',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: RecyclingColors.darkText),
+                        Row(
+                          children: [
+                            const Icon(Icons.insights_rounded, color: RecyclingColors.primaryGreen, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Activity Insights (${_selectedPeriodFilter == 'All' ? 'All Time' : _selectedPeriodFilter})',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: RecyclingColors.darkText,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${filtered.length} drop-offs',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: RecyclingColors.secondaryText,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Try clearing search filters or record a new delivery.',
-                          style: TextStyle(color: RecyclingColors.secondaryText, fontSize: 12.5),
+                        const Divider(height: 20, color: RecyclingColors.cardBorder),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildMonitoringKpi(
+                              '${totalWeight.toStringAsFixed(1)} kg',
+                              'Total Weight',
+                              Icons.scale_rounded,
+                            ),
+                            _buildMonitoringKpi(
+                              '+$totalPoints',
+                              'Eco-Credits',
+                              Icons.stars_rounded,
+                            ),
+                            _buildMonitoringKpi(
+                              '${totalCo2.toStringAsFixed(1)} kg',
+                              'CO₂ Avoided',
+                              Icons.energy_savings_leaf_rounded,
+                            ),
+                            _buildMonitoringKpi(
+                              '${avgWeight.toStringAsFixed(1)} kg',
+                              'Avg Drop-off',
+                              Icons.pie_chart_outline_rounded,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  )
-                else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filtered.length,
-                    separatorBuilder: (ctx, i) => const SizedBox(height: 8),
-                    itemBuilder: (ctx, i) {
-                      return _buildDeliveryItemCard(filtered[i]);
-                    },
                   ),
-              ],
+                  const SizedBox(height: 12),
+
+                  if (filtered.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(36),
+                      alignment: Alignment.center,
+                      child: Column(
+                        children: [
+                          const Icon(Icons.inventory_2_outlined, size: 46, color: Colors.grey),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'No activities match your filters',
+                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: RecyclingColors.darkText),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Try clearing the search or category filters.',
+                            style: TextStyle(color: RecyclingColors.secondaryText, fontSize: 12.5),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _deliverySearchController.clear();
+                                _selectedPeriodFilter = 'All';
+                                _selectedMaterialFilter = 'All';
+                              });
+                            },
+                            icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                            label: const Text('Reset Filters'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: RecyclingColors.primaryGreen,
+                              side: const BorderSide(color: RecyclingColors.primaryGreen),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filtered.length,
+                      separatorBuilder: (ctx, i) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, i) {
+                        return _buildDeliveryItemCard(filtered[i]);
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMonitoringKpi(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: RecyclingColors.primaryGreen, size: 18),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.bold,
+            color: RecyclingColors.darkText,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10.5,
+            color: RecyclingColors.secondaryText,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openActivityAnalyticsModal(List<WasteDeliveryRecord> records) {
+    final Map<String, double> materialWeights = {};
+    for (final r in records) {
+      materialWeights[r.materialType] = (materialWeights[r.materialType] ?? 0.0) + r.weightKg;
+    }
+
+    final totalKg = materialWeights.values.fold<double>(0.0, (s, w) => s + w);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.pie_chart_rounded, color: RecyclingColors.primaryGreen),
+                      SizedBox(width: 8),
+                      Text(
+                        'Material Breakdown Analytics',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: RecyclingColors.darkText),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Total Volume: ${totalKg.toStringAsFixed(1)} kg across ${records.length} records',
+                style: const TextStyle(fontSize: 12.5, color: RecyclingColors.secondaryText),
+              ),
+              const Divider(height: 20, color: RecyclingColors.cardBorder),
+              if (materialWeights.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text('No data recorded for this timeframe.', textAlign: TextAlign.center),
+                )
+              else
+                ...materialWeights.entries.map((entry) {
+                  final pct = totalKg > 0 ? (entry.value / totalKg) * 100 : 0.0;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              entry.key,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RecyclingColors.darkText),
+                            ),
+                            Text(
+                              '${entry.value.toStringAsFixed(1)} kg (${pct.toStringAsFixed(0)}%)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: RecyclingColors.primaryGreen),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: totalKg > 0 ? entry.value / totalKg : 0.0,
+                            minHeight: 8,
+                            backgroundColor: RecyclingColors.softGreen,
+                            valueColor: const AlwaysStoppedAnimation<Color>(RecyclingColors.primaryGreen),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
     );
   }
 
