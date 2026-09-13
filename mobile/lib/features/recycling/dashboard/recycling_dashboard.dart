@@ -616,7 +616,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
               _buildDetailRow(
                 Icons.access_time_outlined,
                 'Recorded At',
-                '${record.dateTime.day}/${record.dateTime.month}/${record.dateTime.year} Ã¢â‚¬Â¢ ${record.dateTime.hour.toString().padLeft(2, '0')}:${record.dateTime.minute.toString().padLeft(2, '0')}',
+                '${record.dateTime.day}/${record.dateTime.month}/${record.dateTime.year} • ${record.dateTime.hour.toString().padLeft(2, '0')}:${record.dateTime.minute.toString().padLeft(2, '0')}',
               ),
               if (record.notes.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -899,12 +899,12 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
     final timeStr = '$hour:${dt.minute.toString().padLeft(2, '0')} $period';
 
     if (difference.inDays == 0 && now.day == dt.day) {
-      return 'Today Ã¢â‚¬Â¢ $timeStr';
+      return 'Today • $timeStr';
     } else if (difference.inDays <= 1 && now.day - dt.day == 1) {
-      return 'Yesterday Ã¢â‚¬Â¢ $timeStr';
+      return 'Yesterday • $timeStr';
     } else {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} Ã¢â‚¬Â¢ $timeStr';
+      return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} • $timeStr';
     }
   }
 
@@ -1515,7 +1515,7 @@ class _RecyclingDashboardState extends State<RecyclingDashboard> {
                                   const SizedBox(height: 10),
                                   if (unsupportedList.isEmpty)
                                     const Text(
-                                      'None Ã¢â‚¬â€ all categories are currently accepted.',
+                                      'None — all categories are currently accepted.',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: RecyclingColors.earthyBrown,
