@@ -46,10 +46,18 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
     var status = report['status']?.toString() ?? 'SUBMITTED';
     var priority = report['priority']?.toString() ?? 'MEDIUM';
     var team = report['assignedTeam']?.toString() ?? '';
+    var reviewNotes = '';
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(builder: (context, setSheetState) {
+        final validationMessage = validateReportTransition(
+          currentStatus: report['status']?.toString() ?? 'SUBMITTED',
+          nextStatus: status,
+          assignedTeam: team,
+          reviewNotes: reviewNotes,
+        );
+
         return Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -68,6 +76,20 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 style: const TextStyle(color: MunicipalColors.primaryText, height: 1.5, fontSize: 12),
               ),
             ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: MunicipalColors.border),
+              ),
+              child: Text(
+                buildVerificationChecklist(report),
+                style: const TextStyle(color: MunicipalColors.primaryText, fontSize: 11, height: 1.6),
+              ),
+            ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: status,
@@ -82,8 +104,37 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
               onChanged: (value) => setSheetState(() => priority = value ?? priority),
             ),
             TextFormField(initialValue: team, decoration: const InputDecoration(labelText: 'Assigned team'), onChanged: (value) => team = value),
+            const SizedBox(height: 8),
+            TextFormField(
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'Review notes / comments'),
+              onChanged: (value) => reviewNotes = value,
+            ),
+            if (validationMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(validationMessage, style: const TextStyle(color: MunicipalColors.error, fontSize: 12)),
+            ],
             const SizedBox(height: 18),
-            SizedBox(width: double.infinity, child: FilledButton(onPressed: () => Navigator.pop(context, {'status': status, 'priority': priority, 'assignedTeam': team}), child: const Text('Save update'))),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  final error = validateReportTransition(
+                    currentStatus: report['status']?.toString() ?? 'SUBMITTED',
+                    nextStatus: status,
+                    assignedTeam: team,
+                    reviewNotes: reviewNotes,
+                  );
+                  if (error != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error))); 
+                    return;
+                  }
+                  Navigator.pop(context, {'status': status, 'priority': priority, 'assignedTeam': team, 'reviewNotes': reviewNotes});
+                },
+                child: const Text('Save update'),
+              ),
+            ),
           ]),
         );
       }),
@@ -162,10 +213,12 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
             );
           }
           final all = snapshot.data ?? [];
-          final reports = filterReports(
-            all,
-            query: _searchController.text,
-            status: _filter,
+          final reports = sortReportsForReview(
+            filterReports(
+              all,
+              query: _searchController.text,
+              status: _filter,
+            ),
           );
           return Column(children: [
             Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 8), child: Row(children: [

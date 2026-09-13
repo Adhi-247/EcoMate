@@ -60,4 +60,36 @@ void main() {
     expect(summary, contains('Lake Road'));
     expect(summary, contains('HIGH'));
   });
+
+  test('sorting prioritizes newest and higher priority reports', () {
+    final reports = [
+      {'id': 1, 'priority': 'LOW', 'createdAt': '2025-01-03T10:00:00'},
+      {'id': 2, 'priority': 'HIGH', 'createdAt': '2025-01-01T10:00:00'},
+      {'id': 3, 'priority': 'MEDIUM', 'createdAt': '2025-01-05T10:00:00'},
+    ];
+
+    final sorted = sortReportsForReview(reports);
+    expect(sorted.map((report) => report['id']), [3, 2, 1]);
+  });
+
+  test('validation blocks invalid status transitions', () {
+    expect(
+      validateReportTransition(
+        currentStatus: 'SUBMITTED',
+        nextStatus: 'ASSIGNED',
+        assignedTeam: '',
+      ),
+      contains('assigned team'),
+    );
+
+    expect(
+      validateReportTransition(
+        currentStatus: 'SUBMITTED',
+        nextStatus: 'REJECTED',
+        assignedTeam: 'Waste Team A',
+        reviewNotes: '',
+      ),
+      contains('review notes'),
+    );
+  });
 }
