@@ -103,4 +103,11 @@ public class RecyclingCentreController {
         RecyclingCentreResponse created = recyclingCentreService.createCentre(request, email);
         return ResponseEntity.ok(created);
     }
+
+    // 10. Delete a recycling centre
+    @DeleteMapping("/centres/{id}")
+    public ResponseEntity<Void> deleteCentre(@PathVariable Long id) {
+        recyclingCentreService.deleteCentre(id);
+        return ResponseEntity.noContent().build();
+    }
 }

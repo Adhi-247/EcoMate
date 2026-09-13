@@ -719,6 +719,27 @@ class RecyclingService {
     return centre;
   }
 
+  Future<bool> deleteCentre(String id) async {
+    final token = await _authService.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        final response = await http.delete(
+          Uri.parse('$baseUrl/api/recycling/centres/$id'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          _centres.removeWhere((c) => c.id == id);
+          return true;
+        }
+      } catch (_) {}
+    }
+    _centres.removeWhere((c) => c.id == id);
+    return true;
+  }
+
   Future<List<WasteDeliveryRecord>> fetchDeliveries({String? centreId}) async {
     final token = await _authService.getToken();
     final url = centreId != null

@@ -557,8 +557,48 @@ class _MunicipalRecyclingCentersPageState extends State<MunicipalRecyclingCenter
                     ),
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: MunicipalColors.error, size: 20),
+                  tooltip: 'Delete Centre',
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete Centre'),
+                        content: Text('Are you sure you want to delete "${centre.name}"?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Delete', style: TextStyle(color: MunicipalColors.error)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await _recyclingService.deleteCentre(centre.id);
+                      _loadCentres();
+                    }
+                  },
+                ),
               ],
             ),
+
+            if (centre.officerEmail != null && centre.officerEmail!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(Icons.badge_outlined, size: 14, color: MunicipalColors.secondaryGreen),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Officer: ${centre.officerEmail}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: MunicipalColors.secondaryGreen),
+                  ),
+                ],
+              ),
+            ],
 
             const SizedBox(height: 12),
             const Divider(height: 1, color: MunicipalColors.border),
