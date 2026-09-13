@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/report_filters.dart';
 import '../../../services/waste_report_service.dart';
 import '../theme/municipal_colors.dart';
 import 'report_location_map_page.dart';
@@ -12,6 +13,7 @@ class IllegalDumpingReportsPage extends StatefulWidget {
 
 class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
   final _service = WasteReportService();
+  final _searchController = TextEditingController();
   late Future<List<Map<String, dynamic>>> _reports;
   String _filter = 'All';
   bool _isReloading = false;
@@ -103,6 +105,12 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MunicipalColors.pageBg,
@@ -139,13 +147,34 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
             );
           }
           final all = snapshot.data ?? [];
-          final reports = _filter == 'All' ? all : all.where((item) => item['status'] == _filter).toList();
+          final reports = filterReports(
+            all,
+            query: _searchController.text,
+            status: _filter,
+          );
           return Column(children: [
             Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 8), child: Row(children: [
               _summary('Open', all.where((item) => item['status'] != 'RESOLVED').length, MunicipalColors.warning),
               _summary('Review', all.where((item) => item['status'] == 'IN_REVIEW').length, MunicipalColors.info),
               _summary('Resolved', all.where((item) => item['status'] == 'RESOLVED').length, MunicipalColors.success),
             ])),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'Search by issue, location, or reference',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: MunicipalColors.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: MunicipalColors.border)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               height: 46,
               child: ListView(
@@ -163,7 +192,7 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 )).toList(),
               ),
             ),
-            Expanded(child: reports.isEmpty ? const Center(child: Text('No reports in this filter.')) : ListView.separated(padding: const EdgeInsets.all(16), itemCount: reports.length, separatorBuilder: (_, _) => const SizedBox(height: 10), itemBuilder: (_, index) => _ReportTile(report: reports[index], onEdit: () => _editReport(reports[index]), onViewLocation: () => _viewLocation(reports[index])))),
+            Expanded(child: reports.isEmpty ? const Center(child: Text('No reports match your current filters.')) : ListView.separated(padding: const EdgeInsets.all(16), itemCount: reports.length, separatorBuilder: (_, _) => const SizedBox(height: 10), itemBuilder: (_, index) => _ReportTile(report: reports[index], onEdit: () => _editReport(reports[index]), onViewLocation: () => _viewLocation(reports[index])))),
           ]);
         },
       ),
