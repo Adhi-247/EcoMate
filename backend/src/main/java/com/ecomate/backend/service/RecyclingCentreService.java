@@ -116,6 +116,43 @@ public class RecyclingCentreService {
     }
 
     @Transactional
+    public RecyclingCentreResponse createCentre(RecyclingCentreRequest request, String createdByEmail) {
+        RecyclingCentre centre = new RecyclingCentre();
+        centre.setName(request.getName());
+        centre.setAddress(request.getAddress());
+        centre.setCity(request.getCity());
+        centre.setContactNumber(request.getContactNumber());
+        centre.setEmail(request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail() : (createdByEmail != null ? createdByEmail : ""));
+        centre.setOfficerEmail(createdByEmail != null && !createdByEmail.isBlank() ? createdByEmail : "council@ecomate.lk");
+        if (createdByEmail != null && !createdByEmail.isBlank()) {
+            userRepository.findByEmail(createdByEmail).ifPresent(centre::setOfficer);
+        }
+        if (request.getOperatingHours() != null && !request.getOperatingHours().isBlank()) {
+            centre.setOperatingHours(request.getOperatingHours());
+        }
+        if (request.getIsOpen() != null) {
+            centre.setIsOpen(request.getIsOpen());
+        }
+        if (request.getNotes() != null) {
+            centre.setNotes(request.getNotes());
+        }
+
+        RecyclingCentre saved = recyclingCentreRepository.save(centre);
+
+        if (request.getAcceptedMaterials() != null && !request.getAcceptedMaterials().isEmpty()) {
+            List<Material> allMaterials = materialRepository.findAll();
+            for (Material mat : allMaterials) {
+                boolean isAccepted = request.getAcceptedMaterials().stream()
+                        .anyMatch(accepted -> accepted.equalsIgnoreCase(mat.getName()) || accepted.equalsIgnoreCase(mat.getCategory()));
+                RecyclingCentreMaterial mapping = new RecyclingCentreMaterial(saved, mat, isAccepted);
+                recyclingCentreMaterialRepository.save(mapping);
+            }
+        }
+
+        return getCentreById(saved.getId());
+    }
+
+    @Transactional
     public RecyclingCentreResponse toggleStatus(String officerEmail, boolean isOpen) {
         RecyclingCentre centre = recyclingCentreRepository.findByOfficerEmailIgnoreCase(officerEmail)
                 .orElseThrow(() -> new RuntimeException("No recycling centre found for officer: " + officerEmail));
