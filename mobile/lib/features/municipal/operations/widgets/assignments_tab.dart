@@ -1,9 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../../theme/municipal_colors.dart';
 import '../models/operations_models.dart';
 import '../services/operations_service.dart';
-import '../../../../services/waste_report_service.dart';
-import 'dart:convert';
 
 class AssignmentsTab extends StatefulWidget {
   const AssignmentsTab({super.key});
@@ -311,27 +311,6 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                                   _showSnackBar('Assignment successfully created!', Colors.green);
                                 }
 
-                                // Sync report statuses if it's a Service Job
-                                if (targetJob.routeId.startsWith('JOB-') && targetJob.description != null) {
-                                  try {
-                                    final desc = jsonDecode(targetJob.description!);
-                                    if (desc['linkedReports'] != null) {
-                                      final List<dynamic> reportIds = desc['linkedReports'];
-                                      final reportService = WasteReportService();
-                                      for (var rId in reportIds) {
-                                        await reportService.updateAdminReport(
-                                          id: int.parse(rId.toString()),
-                                          status: 'ASSIGNED',
-                                          priority: 'MEDIUM', // or fetch existing
-                                          assignedTeam: targetJob.routeId,
-                                        );
-                                      }
-                                    }
-                                  } catch (e) {
-                                    // ignore parsing errors
-                                  }
-                                }
-
                                 _loadData();
                               } catch (e) {
                                 setState(() => _isLoading = false);
@@ -438,28 +417,10 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
       try {
         await _apiService.completeAssignment(assignment.id!);
 
-        // Sync report statuses if it's a Service Job
-        if (assignment.job.routeId.startsWith('JOB-') && assignment.job.description != null) {
-          try {
-            final desc = jsonDecode(assignment.job.description!);
-            if (desc['linkedReports'] != null) {
-              final List<dynamic> reportIds = desc['linkedReports'];
-              final reportService = WasteReportService();
-              for (var rId in reportIds) {
-                await reportService.updateAdminReport(
-                  id: int.parse(rId.toString()),
-                  status: 'RESOLVED',
-                  priority: 'MEDIUM',
-                  assignedTeam: assignment.job.routeId,
-                );
-              }
-            }
-          } catch (e) {
-            // ignore parsing errors
-          }
-        }
-
-        _showSnackBar('Assignment marked as completed.', Colors.green);
+        final message = assignment.job.routeId.startsWith('JOB-')
+            ? 'Service job completed; linked waste reports are resolved.'
+            : 'Assignment marked as completed.';
+        _showSnackBar(message, Colors.green);
         _loadData();
       } catch (e) {
         setState(() => _isLoading = false);
