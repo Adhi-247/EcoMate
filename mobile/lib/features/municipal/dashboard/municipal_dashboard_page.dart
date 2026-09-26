@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'models/municipal_dashboard_models.dart';
 import 'services/municipal_dashboard_service.dart';
+import '../../../../services/auth_service.dart';
+import '../../../screens/login_screen.dart';
 import '../theme/municipal_colors.dart';
 import 'widgets/summary_card.dart';
 import 'widgets/schedule_card.dart';
@@ -22,14 +25,30 @@ class MunicipalDashboardPage extends StatefulWidget {
 
 class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
   final MunicipalDashboardService _dashboardService = MunicipalDashboardService();
+  final AuthService _authService = AuthService();
   MunicipalDashboardSummary? _summaryData;
   bool _isLoading = true;
   String? _errorMessage;
+  String _userName = 'Officer';
+  String _profilePicUrl = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=60';
 
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
+    AuthService.profileUpdateNotifier.addListener(_onProfileUpdated);
+  }
+
+  void _onProfileUpdated() {
+    if (mounted) {
+      _loadDashboardData();
+    }
+  }
+
+  @override
+  void dispose() {
+    AuthService.profileUpdateNotifier.removeListener(_onProfileUpdated);
+    super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
@@ -39,6 +58,17 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
     });
 
     try {
+      final user = await _authService.getCurrentUser();
+      if (mounted && user != null) {
+        final name = user['name']?.toString();
+        if (name != null && name.isNotEmpty) {
+          _userName = name;
+        }
+        final pic = user['profilePic']?.toString();
+        if (pic != null && pic.isNotEmpty) {
+          _profilePicUrl = pic;
+        }
+      }
       final data = await _dashboardService.getDashboardSummary();
       setState(() {
         _summaryData = data;
@@ -52,6 +82,17 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
     }
   }
 
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   String _getFormattedDate() {
     final now = DateTime.now();
     final months = [
@@ -60,6 +101,41 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
     ];
     final monthStr = months[now.month - 1];
     return "Today, ${now.day} $monthStr ${now.year}";
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  }
+
+  String _getFirstName() {
+    try {
+      final name = _userName as dynamic;
+      if (name == null) return 'Officer';
+      final str = name.toString();
+      if (str.isEmpty) return 'Officer';
+      return str.split(' ').first;
+    } catch (e) {
+      return 'Officer';
+    }
+  }
+
+  String _getProfilePic() {
+    try {
+      final pic = _profilePicUrl as dynamic;
+      if (pic == null) return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=60';
+      final str = pic.toString();
+      if (str.isEmpty) return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=60';
+      return str;
+    } catch (e) {
+      return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=60';
+    }
   }
 
   @override
@@ -167,13 +243,6 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
       children: [
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.menu, color: MunicipalColors.primaryText, size: 28),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () {},
-            ),
-            const SizedBox(width: 12),
             const Icon(
               Icons.spa_rounded,
               color: MunicipalColors.secondaryGreen,
@@ -245,20 +314,54 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
               ),
             ),
             const SizedBox(width: 16),
-            // Profile image
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: MunicipalColors.surface,
-              child: ClipOval(
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=60',
-                  fit: BoxFit.cover,
-                  width: 40,
-                  height: 40,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.person_rounded,
-                    color: MunicipalColors.secondaryText,
+            // Profile image with logout menu
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'logout') {
+                  _logout();
+                }
+              },
+              offset: const Offset(0, 45),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout_rounded, color: MunicipalColors.error, size: 20),
+                      SizedBox(width: 12),
+                      Text("Logout", style: TextStyle(color: MunicipalColors.error, fontWeight: FontWeight.bold)),
+                    ],
                   ),
+                ),
+              ],
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: MunicipalColors.surface,
+                child: ClipOval(
+                  child: _getProfilePic().startsWith('data:image')
+                    ? Image.memory(
+                        base64Decode(_getProfilePic().split(',').last),
+                        fit: BoxFit.cover,
+                        width: 40,
+                        height: 40,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.person_rounded,
+                          color: MunicipalColors.secondaryText,
+                        ),
+                      )
+                    : Image.network(
+                        _getProfilePic(),
+                        fit: BoxFit.cover,
+                        width: 40,
+                        height: 40,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.person_rounded,
+                          color: MunicipalColors.secondaryText,
+                        ),
+                      ),
                 ),
               ),
             ),
@@ -325,19 +428,19 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Wrap(
+                      Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            "Good morning, Alex!",
-                            style: TextStyle(
+                            "${_getGreeting()}, ${_getFirstName()}!",
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Text(
+                          const SizedBox(width: 6),
+                          const Text(
                             "🖐️",
                             style: TextStyle(fontSize: 18),
                           ),
@@ -354,7 +457,7 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
                     ],
                   ),
                 ),
-                _buildTruckIllustration(),
+                _buildHeroIllustration(),
               ],
             ),
           ),
@@ -364,124 +467,39 @@ class _MunicipalDashboardPageState extends State<MunicipalDashboardPage> {
     );
   }
 
-  Widget _buildTruckIllustration() {
-    return SizedBox(
-      width: 130,
+  Widget _buildHeroIllustration() {
+    return Container(
+      width: 70,
       height: 70,
-      child: Stack(
-        alignment: Alignment.bottomLeft,
-        children: [
-          // Truck Bed (Green body)
-          Positioned(
-            left: 5,
-            bottom: 12,
-            child: Container(
-              width: 75,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF047857), // emerald dark green
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.recycling_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-            ),
-          ),
-          // Truck Cab (White head)
-          Positioned(
-            left: 83,
-            bottom: 12,
-            child: Container(
-              width: 30,
-              height: 34,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(8),
-                  bottomRight: Radius.circular(3),
-                  topLeft: Radius.circular(2),
-                  bottomLeft: Radius.circular(2),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                  )
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Window
-                  Positioned(
-                    top: 5,
-                    right: 4,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Connector
-          Positioned(
-            left: 80,
-            bottom: 16,
-            child: Container(
-              width: 4,
-              height: 8,
-              color: const Color(0xFF94A3B8),
-            ),
-          ),
-          // Wheels
-          Positioned(
-            left: 16,
-            bottom: 2,
-            child: _buildWheel(),
-          ),
-          Positioned(
-            left: 54,
-            bottom: 2,
-            child: _buildWheel(),
-          ),
-          Positioned(
-            left: 92,
-            bottom: 2,
-            child: _buildWheel(),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildWheel() {
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Container(
-          width: 7,
-          height: 7,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
+          const Icon(
+            Icons.eco_rounded,
+            color: Colors.white,
+            size: 34,
+          ),
+        ],
       ),
     );
   }
