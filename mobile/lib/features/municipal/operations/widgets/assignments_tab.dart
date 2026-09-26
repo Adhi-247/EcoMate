@@ -185,7 +185,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
-                            value: selectedDriverId,
+                            initialValue: selectedDriverId,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.person_rounded),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -210,7 +210,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
-                            value: selectedVehicleId,
+                            initialValue: selectedVehicleId,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.local_shipping_rounded),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -538,7 +538,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: (value.toUpperCase() == 'COMPLETED' ? Colors.green : (value.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen)).withOpacity(0.1),
+                color: (value.toUpperCase() == 'COMPLETED' ? Colors.green : (value.toUpperCase() == 'CANCELLED' ? Colors.grey : MunicipalColors.secondaryGreen)).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -813,7 +813,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: activeColors.withOpacity(0.1),
+                                  color: activeColors.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
