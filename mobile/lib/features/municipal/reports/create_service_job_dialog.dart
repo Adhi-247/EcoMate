@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../services/waste_report_service.dart';
-import '../operations/services/operations_service.dart';
-import '../operations/models/operations_models.dart';
+import 'package:mobile/features/municipal/operations/services/operations_service.dart';
+import 'package:mobile/features/municipal/operations/models/operations_models.dart';
 import '../theme/municipal_colors.dart';
 import 'package:collection/collection.dart';
 
