@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../theme/municipal_colors.dart';
 import '../models/operations_models.dart';
 import '../services/operations_service.dart';
+import '../../../../services/waste_report_service.dart';
+import 'dart:convert';
 
 class AssignmentsTab extends StatefulWidget {
   const AssignmentsTab({super.key});
@@ -308,6 +310,28 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                                   await _apiService.createAssignment(req);
                                   _showSnackBar('Assignment successfully created!', Colors.green);
                                 }
+
+                                // Sync report statuses if it's a Service Job
+                                if (targetJob.routeId.startsWith('JOB-') && targetJob.description != null) {
+                                  try {
+                                    final desc = jsonDecode(targetJob.description!);
+                                    if (desc['linkedReports'] != null) {
+                                      final List<dynamic> reportIds = desc['linkedReports'];
+                                      final reportService = WasteReportService();
+                                      for (var rId in reportIds) {
+                                        await reportService.updateAdminReport(
+                                          id: int.parse(rId.toString()),
+                                          status: 'ASSIGNED',
+                                          priority: 'MEDIUM', // or fetch existing
+                                          assignedTeam: targetJob.routeId,
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    // ignore parsing errors
+                                  }
+                                }
+
                                 _loadData();
                               } catch (e) {
                                 setState(() => _isLoading = false);
@@ -413,6 +437,28 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
       setState(() => _isLoading = true);
       try {
         await _apiService.completeAssignment(assignment.id!);
+
+        // Sync report statuses if it's a Service Job
+        if (assignment.job.routeId.startsWith('JOB-') && assignment.job.description != null) {
+          try {
+            final desc = jsonDecode(assignment.job.description!);
+            if (desc['linkedReports'] != null) {
+              final List<dynamic> reportIds = desc['linkedReports'];
+              final reportService = WasteReportService();
+              for (var rId in reportIds) {
+                await reportService.updateAdminReport(
+                  id: int.parse(rId.toString()),
+                  status: 'RESOLVED',
+                  priority: 'MEDIUM',
+                  assignedTeam: assignment.job.routeId,
+                );
+              }
+            }
+          } catch (e) {
+            // ignore parsing errors
+          }
+        }
+
         _showSnackBar('Assignment marked as completed.', Colors.green);
         _loadData();
       } catch (e) {
@@ -539,6 +585,72 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
     return '$dayStr ($startStr - $endStr)';
   }
 
+  Widget _buildUnassignedJobCard(CollectionJob job, {required bool isServiceJob}) {
+    int reportsCount = 0;
+    if (isServiceJob && job.description != null) {
+      try {
+        final desc = jsonDecode(job.description!);
+        if (desc['linkedReports'] != null) {
+          reportsCount = (desc['linkedReports'] as List).length;
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: MunicipalColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${job.routeId} – ${job.title}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                if (isServiceJob && reportsCount > 0)
+                  Text(
+                    '$reportsCount Reports  |  Zone: ${job.zone}',
+                    style: const TextStyle(color: MunicipalColors.secondaryText, fontSize: 12),
+                  )
+                else
+                  Text(
+                    'Zone: ${job.zone}',
+                    style: const TextStyle(color: MunicipalColors.secondaryText, fontSize: 12),
+                  ),
+                const SizedBox(height: 2),
+                Text(
+                  'Scheduled: ${_formatDateTimeRange(job.startTime, job.endTime)}',
+                  style: const TextStyle(color: MunicipalColors.secondaryText, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: MunicipalColors.secondaryGreen,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => _showAssignmentDialog(job: job),
+            child: const Text('Assign', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -582,74 +694,61 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Section 1: Unassigned Routes
-              Row(
-                children: [
-                  const Icon(Icons.pending_actions_rounded, color: MunicipalColors.warning),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Unassigned Routes (${_unassignedJobs.length})',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: MunicipalColors.primaryText),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_unassignedJobs.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: const Center(
-                    child: Text('All scheduled routes have been assigned!', style: TextStyle(color: MunicipalColors.secondaryText)),
-                  ),
-                )
-              else
-                ..._unassignedJobs.map((job) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: MunicipalColors.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Builder(builder: (context) {
+                final normalRoutes = _unassignedJobs.where((j) => !j.routeId.startsWith('JOB-')).toList();
+                final serviceJobs = _unassignedJobs.where((j) => j.routeId.startsWith('JOB-')).toList();
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Section: Unassigned Service Jobs
+                    if (serviceJobs.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.build_circle_rounded, color: MunicipalColors.warning),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Unassigned Service Jobs (${serviceJobs.length})',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: MunicipalColors.primaryText),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ...serviceJobs.map((job) => _buildUnassignedJobCard(job, isServiceJob: true)),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Section 1: Unassigned Routes
+                    Row(
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${job.routeId} – ${job.title}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Zone: ${job.zone}  |  Time: ${_formatDateTimeRange(job.startTime, job.endTime)}',
-                                style: const TextStyle(color: MunicipalColors.secondaryText, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MunicipalColors.secondaryGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          onPressed: () => _showAssignmentDialog(job: job),
-                          child: const Text('Assign', style: TextStyle(fontSize: 12)),
+                        const Icon(Icons.pending_actions_rounded, color: MunicipalColors.warning),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Unassigned Routes (${normalRoutes.length})',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: MunicipalColors.primaryText),
                         ),
                       ],
                     ),
-                  );
-                }),
+                    const SizedBox(height: 8),
+                    if (normalRoutes.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: const Center(
+                          child: Text('All scheduled routes have been assigned!', style: TextStyle(color: MunicipalColors.secondaryText)),
+                        ),
+                      )
+                    else
+                      ...normalRoutes.map((job) => _buildUnassignedJobCard(job, isServiceJob: false)),
+                  ],
+                );
+              }),
+
 
               const SizedBox(height: 24),
 

@@ -2,8 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class AuthService {
+  static final ValueNotifier<int> profileUpdateNotifier = ValueNotifier(0);
+
   static const FlutterSecureStorage _storage =
       FlutterSecureStorage();
 
@@ -97,8 +100,25 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body)
-            as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        // Mocking local overrides for prototype
+        final overriddenName = await _storage.read(key: 'name_override');
+        if (overriddenName != null && overriddenName.isNotEmpty) {
+          data['name'] = overriddenName;
+        }
+        
+        final profilePic = await _storage.read(key: 'profile_pic');
+        if (profilePic != null && profilePic.isNotEmpty) {
+          data['profilePic'] = profilePic;
+        }
+
+        final email = await _storage.read(key: 'email');
+        if (email != null && email.isNotEmpty) {
+          data['email'] = email;
+        }
+
+        return data;
       }
 
       if (response.statusCode == 401 ||
@@ -111,6 +131,22 @@ class AuthService {
     } catch (e) {
       return null;
     }
+  }
+
+  Future<void> updateProfile({String? name, String? profilePicUrl}) async {
+    if (name != null) {
+      await _storage.write(key: 'name_override', value: name);
+    }
+    if (profilePicUrl != null) {
+      await _storage.write(key: 'profile_pic', value: profilePicUrl);
+    }
+    profileUpdateNotifier.value++;
+  }
+
+  Future<void> updateSecurity({required String email, required String currentPassword, required String newPassword}) async {
+    // Dummy implementation for prototype
+    await _storage.write(key: 'email', value: email);
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   Future<void> logout() async {

@@ -663,11 +663,12 @@ class _MunicipalSchedulePageState extends State<MunicipalSchedulePage> {
   }
 
   Widget _buildOptionalFiltersPanel() {
-    return Container(
+    return Material(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ExpansionTile(
-        title: const Text('Filters', style: TextStyle(fontWeight: FontWeight.bold, color: MunicipalColors.primaryText, fontSize: 14)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: ExpansionTile(
+          title: const Text('Filters', style: TextStyle(fontWeight: FontWeight.bold, color: MunicipalColors.primaryText, fontSize: 14)),
         leading: const Icon(Icons.filter_list, color: MunicipalColors.secondaryGreen, size: 20),
         dense: true,
         children: [
@@ -712,6 +713,7 @@ class _MunicipalSchedulePageState extends State<MunicipalSchedulePage> {
           ),
           const SizedBox(height: 8),
         ],
+        ),
       ),
     );
   }

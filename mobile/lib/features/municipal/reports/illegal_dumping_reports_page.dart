@@ -4,6 +4,7 @@ import '../../../services/report_review.dart';
 import '../../../services/waste_report_service.dart';
 import '../theme/municipal_colors.dart';
 import 'report_location_map_page.dart';
+import 'create_service_job_dialog.dart';
 
 class IllegalDumpingReportsPage extends StatefulWidget {
   const IllegalDumpingReportsPage({super.key});
@@ -91,6 +92,54 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
               ),
             ),
             const SizedBox(height: 16),
+            if (team.startsWith('JOB-'))
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: MunicipalColors.secondaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: MunicipalColors.secondaryGreen),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Service Job', style: TextStyle(fontSize: 12, color: MunicipalColors.secondaryGreen, fontWeight: FontWeight.bold)),
+                        Text(team, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    FilledButton.tonal(
+                      onPressed: () {
+                         final pageMessenger = ScaffoldMessenger.of(context);
+                         Navigator.pop(context);
+                         pageMessenger.showSnackBar(const SnackBar(content: Text('Please navigate to Operations -> Schedule -> Assignments to view this job')));
+                      },
+                      child: const Text('View Job'),
+                    ),
+                  ],
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final pageMessenger = ScaffoldMessenger.of(context);
+                    Navigator.pop(context);
+                    _createJobFromReport(report, pageMessenger);
+                  },
+                  icon: const Icon(Icons.add_task_rounded, size: 20),
+                  label: const Text('Create Service Job'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: MunicipalColors.secondaryGreen,
+                    side: const BorderSide(color: MunicipalColors.secondaryGreen),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: status,
               decoration: const InputDecoration(labelText: 'Status'),
@@ -167,6 +216,22 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
   void _viewLocation(Map<String, dynamic> report) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ReportLocationMapPage(report: report)),
+    );
+  }
+
+  void _createJobFromReport(Map<String, dynamic> report, [ScaffoldMessengerState? messenger]) {
+    final activeMessenger = messenger ?? ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      builder: (_) => CreateServiceJobDialog(
+        initialReport: report,
+        onJobCreated: () {
+          _reload();
+          activeMessenger.showSnackBar(
+            const SnackBar(content: Text('Service Job created successfully. Go to Schedule to assign.'))
+          );
+        },
+      ),
     );
   }
 
@@ -260,7 +325,7 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 )).toList(),
               ),
             ),
-            Expanded(child: reports.isEmpty ? const Center(child: Text('No reports match your current filters.')) : ListView.separated(padding: const EdgeInsets.all(16), itemCount: reports.length, separatorBuilder: (_, _) => const SizedBox(height: 10), itemBuilder: (_, index) => _ReportTile(report: reports[index], onEdit: () => _editReport(reports[index]), onViewLocation: () => _viewLocation(reports[index])))),
+            Expanded(child: reports.isEmpty ? const Center(child: Text('No reports match your current filters.')) : ListView.separated(padding: const EdgeInsets.all(16), itemCount: reports.length, separatorBuilder: (_, _) => const SizedBox(height: 10), itemBuilder: (_, index) => _ReportTile(report: reports[index], onEdit: () => _editReport(reports[index]), onViewLocation: () => _viewLocation(reports[index]), onCreateJob: () => _createJobFromReport(reports[index])))),
           ]);
         },
       ),
@@ -271,15 +336,17 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
 }
 
 class _ReportTile extends StatelessWidget {
-  const _ReportTile({required this.report, required this.onEdit, required this.onViewLocation});
+  const _ReportTile({required this.report, required this.onEdit, required this.onViewLocation, required this.onCreateJob});
   final Map<String, dynamic> report;
   final VoidCallback onEdit;
   final VoidCallback onViewLocation;
+  final VoidCallback onCreateJob;
 
   @override
   Widget build(BuildContext context) {
     final status = report['status']?.toString() ?? 'SUBMITTED';
     final priority = report['priority']?.toString() ?? 'MEDIUM';
+    final team = report['assignedTeam']?.toString() ?? '';
     return ListTile(
       onTap: onEdit,
       tileColor: Colors.white,
@@ -305,6 +372,13 @@ class _ReportTile extends StatelessWidget {
                   color: report['latitude'] != null && report['longitude'] != null ? MunicipalColors.secondaryGreen : MunicipalColors.mutedText,
                 ),
               ),
+              if (!team.startsWith('JOB-'))
+                IconButton(
+                  onPressed: onCreateJob,
+                  tooltip: 'Create Service Job',
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.add_task_rounded, size: 18, color: MunicipalColors.secondaryGreen),
+                ),
               IconButton(
                 onPressed: onEdit,
                 tooltip: 'Edit report',
