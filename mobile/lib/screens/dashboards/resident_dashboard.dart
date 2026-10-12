@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../notifications_screen.dart';
 import '../../services/auth_service.dart';
@@ -7,14 +6,11 @@ import '../../features/recycling/services/recycling_service.dart';
 import '../login_screen.dart';
 import '../../features/recycling/screens/waste_segregation_guide_screen.dart';
 import '../../features/recycling/screens/recycling_centers_screen.dart';
-import '../../features/recycling/screens/resident_recycling_history_screen.dart';
 import '../collection_schedule_screen.dart';
 import '../report_issue_screen.dart';
 import '../my_reports_screen.dart';
 import '../resident_profile_screen.dart';
-import '../../features/recycling/screens/waste_segregation_guide_screen.dart';
-import '../../features/recycling/screens/recycling_centers_screen.dart';
-import '../../features/special_pickup/screens/pickup_requests_screen.dart';
+import '../../features/special_pickup/screens/available_special_pickups_screen.dart';
 import '../../features/special_pickup/screens/pickup_request_details_screen.dart';
 import '../../features/special_pickup/data/pickup_mock_data.dart';
 import '../../features/special_pickup/models/special_pickup.dart';
@@ -31,7 +27,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   final RecyclingService _recyclingService = RecyclingService();
   int _totalEcoPoints = 0;
   int _totalItemsRecycled = 0;
-
   int _selectedIndex = 0;
   String _userName = 'Resident';
   String? _profilePictureData;
@@ -62,7 +57,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       }
     } catch (_) {}
   }
-
   Future<void> _loadUserInfo() async {
     try {
       final user = await _authService.getCurrentUser();
@@ -81,10 +75,25 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   }
   Future<void> _loadSpecialPickup() async {
     try {
-      final pickups = await _specialPickupService.getAvailablePickups();
+      final pickups =
+          await _specialPickupService.getAvailablePickups();
       if (!mounted) return;
+      // The backend list can now contain SCHEDULED and CANCELLED
+      // pickups because the View All page needs to show both.
+      //
+      // The dashboard, however, should only feature an active
+      // SCHEDULED pickup.
+      final scheduledPickups = pickups
+          .where((pickup) => pickup.isScheduled)
+          .toList();
+      // Show the nearest upcoming scheduled pickup first.
+      scheduledPickups.sort(
+        (a, b) => a.pickupDate.compareTo(b.pickupDate),
+      );
       setState(() {
-        _specialPickup = pickups.isNotEmpty ? pickups.first : null;
+        _specialPickup = scheduledPickups.isNotEmpty
+            ? scheduledPickups.first
+            : null;
         _isLoadingSpecialPickup = false;
         _specialPickupError = null;
       });
@@ -97,7 +106,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       });
     }
   }
-
   Future<void> _logout() async {
     await _authService.logout();
     if (!mounted) return;
@@ -110,8 +118,12 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   void _openPickupRequests() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const PickupRequestsScreen()),
-    );
+      MaterialPageRoute(
+        builder: (_) => const AvailableSpecialPickupsScreen(),
+      ),
+    ).then((_) {
+      if (mounted) _loadSpecialPickup();
+    });
   }
   void _openPickupDetails() {
     try {
@@ -409,10 +421,11 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.eco_rounded,
-                            color: primaryGreen,
-                            size: 36,
+                          Image.asset(
+                            'assets/images/ecomate_logo.png',
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.contain,
                           ),
                           const SizedBox(width: 5),
                           RichText(
@@ -442,7 +455,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                 ],
               ),
             ),
-          ), // Added comma here
+          ),
           const Spacer(),
           Stack(
                 clipBehavior: Clip.none,
@@ -540,7 +553,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hello, $_userName! Ã°Å¸â€˜â€¹',
+                  'Hello, $_userName! 👋',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -659,7 +672,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ),
     );
   }
-
   Widget _buildSpecialPickupError() {
     return Container(
       width: double.infinity,
@@ -692,7 +704,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ),
     );
   }
-
   Widget _buildNoSpecialPickup() {
     return Container(
       width: double.infinity,
@@ -709,7 +720,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ),
     );
   }
-
   Widget _buildSpecialPickupContent(SpecialPickup pickup) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +771,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ],
     );
   }
-
   Widget _pickupImage(SpecialPickup pickup) {
     return Container(
       height: 150,
@@ -802,7 +811,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ),
     );
   }
-
   Widget _pickupDetails(SpecialPickup pickup) {
     final joined = pickup.isApproved;
     return Column(
@@ -873,7 +881,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                     ),
                   ),
                 );
-
                 if (joined == true) {
                   await _loadSpecialPickup();
                 }
@@ -898,7 +905,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ],
     );
   }
-
   Widget _buildHouseholdCapacity(SpecialPickup pickup) {
     final progress = pickup.maxHouseholds <= 0 ? 0.0 : (pickup.joinedHouseholds / pickup.maxHouseholds).clamp(0.0, 1.0);
     return Column(
@@ -919,13 +925,11 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       ],
     );
   }
-
   String _formatPickupDate(DateTime date) {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     return '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]} ${date.year}';
   }
-
   String _formatTime(String value) {
     try {
       final parts = value.split(':');
@@ -939,7 +943,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       return value;
     }
   }
-
   String _joinDeadlineText(SpecialPickup pickup) {
     final deadline = pickup.joinDeadline;
     if (deadline == null) return 'Join while space is available';
@@ -956,7 +959,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
     }
     return 'Less than 1 hour left';
   }
-
   void _showPickupSummary(SpecialPickup pickup) {
     showModalBottomSheet(
       context: context,
@@ -988,7 +990,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                 const SizedBox(height: 6),
                 Text('Remaining weight: ${pickup.remainingWeightKg.toStringAsFixed(1)} kg'),
                 const SizedBox(height: 6),
-                Text('Remaining volume: ${pickup.remainingVolumeM3.toStringAsFixed(1)} mÃ‚Â³'),
+                Text('Remaining volume: ${pickup.remainingVolumeM3.toStringAsFixed(1)} m³'),
                 if (pickup.isApproved) ...[
                   const SizedBox(height: 18),
                   Container(
@@ -1011,7 +1013,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       },
     );
   }
-
   Widget _pickupLine(IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -1262,7 +1263,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
             value: _totalItemsRecycled.toString(),
             title: 'Items Recycled',
             subtitle: 'This Month',
-            footer: '? 12% vs last month',
+            footer: '↑ 12% vs last month',
             onTap: () {},
           ),
           _statCard(
@@ -1270,21 +1271,21 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
             value: '3',
             title: 'Pickup Requests',
             subtitle: 'This Month',
-            footer: '? 2 Completed',
+            footer: '✓ 2 Completed',
           ),
           _statCard(
             icon: Icons.groups_rounded,
             value: '12',
             title: 'Active Neighbors',
             subtitle: 'In Your Area',
-            footer: '? 2 joined this week',
+            footer: '→ 2 joined this week',
           ),
           _statCard(
             icon: Icons.eco_rounded,
             value: _totalEcoPoints.toString(),
             title: 'Community Score',
             subtitle: 'Great job!',
-            footer: '? Top 20% in your area',
+            footer: '↑ Top 20% in your area',
           ),
         ];
         return Wrap(
@@ -1410,7 +1411,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
             icon: Icons.local_shipping_rounded,
             title: 'Pickup Completed',
             category: 'Organic Waste',
-            date: '16 May 2025 Ã¢â‚¬Â¢ 7:15 AM',
+            date: '16 May 2025 • 7:15 AM',
             completed: true,
             onTap: _openPickupDetails,
           ),
@@ -1419,7 +1420,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
             icon: Icons.description_rounded,
             title: 'Request Submitted',
             category: 'Recyclables',
-            date: '14 May 2025 Ã¢â‚¬Â¢ 4:30 PM',
+            date: '14 May 2025 • 4:30 PM',
             completed: false,
             onTap: _openPickupRequests,
           ),
@@ -1680,8 +1681,3 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
     );
   }
 }
-
-
-
-
-
