@@ -127,6 +127,53 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: report['reporterConfirmed'] == true
+                    ? MunicipalColors.success.withValues(alpha: 0.10)
+                    : MunicipalColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: MunicipalColors.border),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    report['reporterConfirmed'] == true
+                        ? Icons.verified_outlined
+                        : Icons.hourglass_empty_rounded,
+                    size: 20,
+                    color: report['reporterConfirmed'] == true
+                        ? MunicipalColors.success
+                        : MunicipalColors.mutedText,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          report['reporterConfirmed'] == true
+                              ? 'Resident confirmed resolution'
+                              : 'Resident confirmation pending',
+                          style: const TextStyle(fontWeight: FontWeight.w800, color: MunicipalColors.primaryText),
+                        ),
+                        if (report['reporterFeedback']?.toString().trim().isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Feedback: ${report['reporterFeedback']}',
+                            style: const TextStyle(color: MunicipalColors.secondaryText, height: 1.35),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             if (team.startsWith('JOB-'))
               Container(
@@ -465,6 +512,7 @@ class _ReportTile extends StatelessWidget {
       _ => MunicipalColors.warning,
     };
     final team = report['assignedTeam']?.toString() ?? '';
+    final reporterConfirmed = report['reporterConfirmed'] == true;
     return ListTile(
       onTap: onEdit,
       tileColor: Colors.white,
@@ -506,6 +554,11 @@ class _ReportTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(status.replaceAll('_', ' '), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: MunicipalColors.secondaryGreen)),
+          if (reporterConfirmed)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Icon(Icons.verified_outlined, size: 16, color: MunicipalColors.success),
+            ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
