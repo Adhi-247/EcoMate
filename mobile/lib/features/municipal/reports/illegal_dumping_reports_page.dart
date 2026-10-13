@@ -22,6 +22,7 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
   String _filter = 'All';
   String _priorityFilter = 'All';
   bool _isReloading = false;
+  bool _isSavingReport = false;
 
   @override
   void initState() {
@@ -97,6 +98,35 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 style: const TextStyle(color: MunicipalColors.primaryText, fontSize: 11, height: 1.6),
               ),
             ),
+            if (report['photoData']?.toString().isNotEmpty == true) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: MunicipalColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Resident evidence', style: TextStyle(fontWeight: FontWeight.w800, color: MunicipalColors.primaryText)),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        base64Decode(report['photoData'].toString()),
+                        width: double.infinity,
+                        height: 130,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Text('Resident evidence could not be displayed.'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             if (team.startsWith('JOB-'))
               Container(
@@ -213,6 +243,7 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
       }),
     );
     if (result == null || !mounted) return;
+    setState(() => _isSavingReport = true);
     try {
       final updated = await _service.updateAdminReport(
         id: (report['id'] as num).toInt(),
@@ -236,6 +267,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
       }
     } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $error')));
+    } finally {
+      if (mounted) setState(() => _isSavingReport = false);
     }
   }
 
@@ -315,7 +348,10 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
         title: const Text('Illegal Dumping', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [IconButton(onPressed: () { _reload(); }, icon: const Icon(Icons.refresh_rounded))],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
+      body: Column(
+        children: [
+          if (_isSavingReport) const LinearProgressIndicator(minHeight: 3, color: MunicipalColors.accentGreenLight),
+          Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
         future: _reports,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -401,6 +437,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
             Expanded(child: reports.isEmpty ? const Center(child: Text('No reports match your current filters.')) : ListView.separated(padding: const EdgeInsets.all(16), itemCount: reports.length, separatorBuilder: (_, _) => const SizedBox(height: 10), itemBuilder: (_, index) => _ReportTile(report: reports[index], onEdit: () => _editReport(reports[index]), onViewLocation: () => _viewLocation(reports[index]), onCreateJob: () => _createJobFromReport(reports[index]), onSetPriority: (priority) => _setPriority(reports[index], priority)))),
           ]);
         },
+          )),
+        ],
       ),
     );
   }

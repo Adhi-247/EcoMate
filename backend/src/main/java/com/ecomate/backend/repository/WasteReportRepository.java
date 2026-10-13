@@ -11,7 +11,7 @@ public interface WasteReportRepository extends JpaRepository<WasteReport, Long> 
     @Query("""
             select new com.ecomate.backend.dto.WasteReportSummary(
                 r.id, r.referenceNumber, r.issueType, r.location, r.latitude,
-                r.longitude, r.wasteCategory, r.description,
+                r.longitude, r.wasteCategory, r.description, r.photoData,
                 case when r.photoData is not null and r.photoData <> '' then true else false end,
                 r.status, r.priority, r.assignedTeam, r.reviewNotes, r.resolutionEvidence,
                 case when r.resolutionEvidence is not null and r.resolutionEvidence <> '' then true else false end,
@@ -26,7 +26,7 @@ public interface WasteReportRepository extends JpaRepository<WasteReport, Long> 
     @Query("""
             select new com.ecomate.backend.dto.WasteReportSummary(
                 r.id, r.referenceNumber, r.issueType, r.location, r.latitude,
-                r.longitude, r.wasteCategory, r.description,
+                r.longitude, r.wasteCategory, r.description, r.photoData,
                 case when r.photoData is not null and r.photoData <> '' then true else false end,
                 r.status, r.priority, r.assignedTeam, r.reviewNotes, r.resolutionEvidence,
                 case when r.resolutionEvidence is not null and r.resolutionEvidence <> '' then true else false end,

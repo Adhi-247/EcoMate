@@ -11,6 +11,7 @@ public record WasteReportSummary(
         Double longitude,
         String wasteCategory,
         String description,
+        String photoData,
         boolean hasPhoto,
         String status,
         String priority,
@@ -25,7 +26,7 @@ public record WasteReportSummary(
 ) {
         public WasteReportResponse toResponse() {
                 return new WasteReportResponse(id, referenceNumber, issueType, location,
-                                latitude, longitude, wasteCategory, description, hasPhoto, status,
+                                latitude, longitude, wasteCategory, description, photoData, hasPhoto, status,
                                 priority, assignedTeam, reviewNotes, resolutionEvidence, hasResolutionEvidence,
                                 Boolean.TRUE.equals(reporterConfirmed), reporterFeedback, reporterEmail, createdAt);
         }

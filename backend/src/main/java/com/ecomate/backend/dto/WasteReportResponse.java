@@ -12,6 +12,7 @@ public record WasteReportResponse(
         Double longitude,
         String wasteCategory,
         String description,
+        String photoData,
         boolean hasPhoto,
         String status,
         String priority,
@@ -28,7 +29,7 @@ public record WasteReportResponse(
         return new WasteReportResponse(
                 report.getId(), report.getReferenceNumber(), report.getIssueType(),
                 report.getLocation(), report.getLatitude(), report.getLongitude(),
-                report.getWasteCategory(), report.getDescription(),
+                report.getWasteCategory(), report.getDescription(), report.getPhotoData(),
                 report.getPhotoData() != null && !report.getPhotoData().isBlank(),
                 report.getStatus(), report.getPriority(), report.getAssignedTeam(),
                 report.getReviewNotes(), report.getResolutionEvidence(),
