@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/waste_report_service.dart';
 
@@ -74,7 +75,6 @@ class ReportStatusScreen extends StatelessWidget {
         ],
       ),
     );
-    controller.dispose();
     if (!context.mounted || feedback == null) return;
     try {
       await WasteReportService().submitFeedback(
@@ -160,6 +160,34 @@ class ReportStatusScreen extends StatelessWidget {
           if (report['assignedTeam']?.toString().trim().isNotEmpty == true) ...[
             const SizedBox(height: 14),
             _InfoRow(label: 'Assigned team', value: report['assignedTeam'].toString()),
+          ],
+          if (report['resolutionEvidence']?.toString().isNotEmpty == true) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Resolution evidence', style: TextStyle(color: darkGreen, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      base64Decode(report['resolutionEvidence'].toString()),
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Text('Resolution evidence could not be displayed.'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
           if (_status == 'RESOLVED') ...[
             const SizedBox(height: 16),

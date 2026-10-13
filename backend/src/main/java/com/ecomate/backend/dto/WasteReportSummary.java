@@ -16,6 +16,7 @@ public record WasteReportSummary(
         String priority,
         String assignedTeam,
         String reviewNotes,
+        String resolutionEvidence,
         boolean hasResolutionEvidence,
         Boolean reporterConfirmed,
         String reporterFeedback,
@@ -25,7 +26,7 @@ public record WasteReportSummary(
         public WasteReportResponse toResponse() {
                 return new WasteReportResponse(id, referenceNumber, issueType, location,
                                 latitude, longitude, wasteCategory, description, hasPhoto, status,
-                                priority, assignedTeam, reviewNotes, hasResolutionEvidence,
+                                priority, assignedTeam, reviewNotes, resolutionEvidence, hasResolutionEvidence,
                                 Boolean.TRUE.equals(reporterConfirmed), reporterFeedback, reporterEmail, createdAt);
         }
 }
