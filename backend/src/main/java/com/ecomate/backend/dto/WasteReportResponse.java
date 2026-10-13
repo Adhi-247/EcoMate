@@ -16,6 +16,10 @@ public record WasteReportResponse(
         String status,
         String priority,
         String assignedTeam,
+        String reviewNotes,
+        boolean hasResolutionEvidence,
+        boolean reporterConfirmed,
+        String reporterFeedback,
         String reporterEmail,
         LocalDateTime createdAt
 ) {
@@ -26,6 +30,8 @@ public record WasteReportResponse(
                 report.getWasteCategory(), report.getDescription(),
                 report.getPhotoData() != null && !report.getPhotoData().isBlank(),
                 report.getStatus(), report.getPriority(), report.getAssignedTeam(),
+                report.getReviewNotes(), report.getResolutionEvidence() != null && !report.getResolutionEvidence().isBlank(),
+                report.isReporterConfirmed(), report.getReporterFeedback(),
                 report.getReporterEmail(), report.getCreatedAt());
     }
 }

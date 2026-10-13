@@ -15,12 +15,17 @@ public record WasteReportSummary(
         String status,
         String priority,
         String assignedTeam,
+        String reviewNotes,
+        boolean hasResolutionEvidence,
+        boolean reporterConfirmed,
+        String reporterFeedback,
         String reporterEmail,
         LocalDateTime createdAt
 ) {
         public WasteReportResponse toResponse() {
                 return new WasteReportResponse(id, referenceNumber, issueType, location,
                                 latitude, longitude, wasteCategory, description, hasPhoto, status,
-                                priority, assignedTeam, reporterEmail, createdAt);
+                                priority, assignedTeam, reviewNotes, hasResolutionEvidence,
+                                reporterConfirmed, reporterFeedback, reporterEmail, createdAt);
         }
 }

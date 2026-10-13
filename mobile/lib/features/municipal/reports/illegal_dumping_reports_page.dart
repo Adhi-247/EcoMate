@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../services/report_filters.dart';
 import '../../../services/report_review.dart';
 import '../../../services/waste_report_service.dart';
@@ -49,6 +51,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
     var priority = report['priority']?.toString() ?? 'MEDIUM';
     var team = report['assignedTeam']?.toString() ?? '';
     var reviewNotes = '';
+      String? resolutionEvidence;
+      final picker = ImagePicker();
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
       isScrollControlled: true,
@@ -161,6 +165,17 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
               decoration: const InputDecoration(labelText: 'Review notes / comments'),
               onChanged: (value) => reviewNotes = value,
             ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 60, maxWidth: 1280, maxHeight: 1280);
+                if (file == null) return;
+                final bytes = await file.readAsBytes();
+                setSheetState(() => resolutionEvidence = base64Encode(bytes));
+              },
+              icon: Icon(resolutionEvidence == null ? Icons.add_a_photo_outlined : Icons.check_circle_outline),
+              label: Text(resolutionEvidence == null ? 'Upload resolution evidence' : 'Resolution evidence attached'),
+            ),
             if (validationMessage != null) ...[
               const SizedBox(height: 10),
               Text(validationMessage, style: const TextStyle(color: MunicipalColors.error, fontSize: 12)),
@@ -180,7 +195,13 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error))); 
                     return;
                   }
-                  Navigator.pop(context, {'status': status, 'priority': priority, 'assignedTeam': team, 'reviewNotes': reviewNotes});
+                  Navigator.pop(context, {
+                    'status': status,
+                    'priority': priority,
+                    'assignedTeam': team,
+                    'reviewNotes': reviewNotes,
+                    'resolutionEvidence': resolutionEvidence,
+                  });
                 },
                 child: const Text('Save update'),
               ),
@@ -196,6 +217,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
         status: result['status']!,
         priority: result['priority']!,
         assignedTeam: result['assignedTeam']!,
+        reviewNotes: result['reviewNotes'],
+        resolutionEvidence: result['resolutionEvidence'],
       );
       final currentReports = await _reports;
       final updatedReports = currentReports.map((currentReport) {

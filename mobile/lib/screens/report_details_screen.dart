@@ -4,8 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../services/waste_report_service.dart';
+import 'report_location_picker_page.dart';
 
 class ReportDetailsScreen extends StatefulWidget {
   const ReportDetailsScreen({super.key, required this.issueType, this.report});
@@ -118,6 +120,34 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     }
   }
 
+  Future<void> _pickMapLocation() async {
+    final selected = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (_) => ReportLocationPickerPage(
+          initialPoint: _position == null ? null : LatLng(_position!.latitude, _position!.longitude),
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _position = Position(
+        latitude: selected.latitude,
+        longitude: selected.longitude,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0,
+        altitudeAccuracy: 0,
+        headingAccuracy: 0,
+      );
+      if (_locationController.text.trim().isEmpty) {
+        _locationController.text = 'Selected map location';
+      }
+    });
+  }
+
   Future<void> _submit() async {
     if (_locationController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
       _showMessage('Add a location and description before submitting.');
@@ -221,6 +251,12 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                 ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: green))
                 : const Icon(Icons.my_location_outlined),
             label: Text(_position == null ? 'Use current GPS location' : 'Update GPS location'),
+            style: OutlinedButton.styleFrom(foregroundColor: darkGreen),
+          ),
+          OutlinedButton.icon(
+            onPressed: _pickMapLocation,
+            icon: const Icon(Icons.map_outlined),
+            label: const Text('Select location on map'),
             style: OutlinedButton.styleFrom(foregroundColor: darkGreen),
           ),
           if (_position != null)
