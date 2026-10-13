@@ -43,15 +43,16 @@ public class WasteReport {
     @Column(length = 80)
     private String assignedTeam;
 
-    @Column(length = 1200)
+    @Column(name = "review_notes", length = 1200)
     private String reviewNotes;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "resolution_evidence", columnDefinition = "TEXT")
     private String resolutionEvidence;
 
+    @Column(name = "reporter_confirmed", columnDefinition = "boolean default false")
     private Boolean reporterConfirmed;
 
-    @Column(length = 1200)
+    @Column(name = "reporter_feedback", length = 1200)
     private String reporterFeedback;
 
     @Column(nullable = false)
