@@ -51,9 +51,9 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
     var priority = report['priority']?.toString() ?? 'MEDIUM';
     var team = report['assignedTeam']?.toString() ?? '';
     var reviewNotes = '';
-      String? resolutionEvidence;
-      final picker = ImagePicker();
-    final result = await showModalBottomSheet<Map<String, String>>(
+    String? resolutionEvidence;
+    final picker = ImagePicker();
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(builder: (context, setSheetState) {
@@ -66,7 +66,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
 
         return Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(report['issueType']?.toString() ?? 'Report', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Container(
@@ -206,7 +207,8 @@ class _IllegalDumpingReportsPageState extends State<IllegalDumpingReportsPage> {
                 child: const Text('Save update'),
               ),
             ),
-          ]),
+            ]),
+          ),
         );
       }),
     );
