@@ -31,8 +31,11 @@ public class NotificationService {
         return toDto(repository.save(notification));
     }
 
-        public List<NotificationDto> getNotificationsForUser(String userEmail) {
-        return repository.findByUserEmailOrderByDateTimeDesc(userEmail).stream()
+    public List<NotificationDto> getNotificationsForUser(String userEmail) {
+        if (userEmail == null || userEmail.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return repository.findByUserEmailIgnoreCaseOrderByDateTimeDesc(userEmail.trim()).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -40,6 +43,7 @@ public class NotificationService {
     public NotificationDto createUserNotification(String userEmail, String title, String message) {
         Notification notification = new Notification();
         notification.setUserEmail(userEmail);
+        notification.setEmployeeId(userEmail != null ? userEmail : "SYSTEM");
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setDateTime(LocalDateTime.now());

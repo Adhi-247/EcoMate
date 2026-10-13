@@ -1499,17 +1499,37 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
         child: Column(
           children: [
             const SizedBox(height: 25),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.eco_rounded, color: primaryGreen, size: 31),
-                SizedBox(width: 5),
-                Text(
-                  'EcoMate',
-                  style: TextStyle(
-                    color: darkText,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
+                Image.asset(
+                  'assets/images/ecomate_logo.png',
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.eco_rounded,
+                    color: primaryGreen,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Eco',
+                        style: TextStyle(color: darkText),
+                      ),
+                      TextSpan(
+                        text: 'Mate',
+                        style: TextStyle(color: deepGreen),
+                      ),
+                    ],
                   ),
                 ),
               ],
