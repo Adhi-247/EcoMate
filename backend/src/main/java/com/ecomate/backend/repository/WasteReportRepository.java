@@ -15,7 +15,8 @@ public interface WasteReportRepository extends JpaRepository<WasteReport, Long> 
                 case when r.photoData is not null and r.photoData <> '' then true else false end,
                 r.status, r.priority, r.assignedTeam, r.reviewNotes,
                 case when r.resolutionEvidence is not null and r.resolutionEvidence <> '' then true else false end,
-                r.reporterConfirmed, r.reporterFeedback, r.reporterEmail, r.createdAt)
+                case when r.reporterConfirmed = true then true else false end,
+                r.reporterFeedback, r.reporterEmail, r.createdAt)
             from WasteReport r
             where r.reporterEmail = :reporterEmail
             order by r.createdAt desc
@@ -29,7 +30,8 @@ public interface WasteReportRepository extends JpaRepository<WasteReport, Long> 
                 case when r.photoData is not null and r.photoData <> '' then true else false end,
                 r.status, r.priority, r.assignedTeam, r.reviewNotes,
                 case when r.resolutionEvidence is not null and r.resolutionEvidence <> '' then true else false end,
-                r.reporterConfirmed, r.reporterFeedback, r.reporterEmail, r.createdAt)
+                case when r.reporterConfirmed = true then true else false end,
+                r.reporterFeedback, r.reporterEmail, r.createdAt)
             from WasteReport r
             order by r.createdAt desc
             """)

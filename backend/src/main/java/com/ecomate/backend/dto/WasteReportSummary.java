@@ -17,7 +17,7 @@ public record WasteReportSummary(
         String assignedTeam,
         String reviewNotes,
         boolean hasResolutionEvidence,
-        boolean reporterConfirmed,
+        Boolean reporterConfirmed,
         String reporterFeedback,
         String reporterEmail,
         LocalDateTime createdAt
@@ -26,6 +26,6 @@ public record WasteReportSummary(
                 return new WasteReportResponse(id, referenceNumber, issueType, location,
                                 latitude, longitude, wasteCategory, description, hasPhoto, status,
                                 priority, assignedTeam, reviewNotes, hasResolutionEvidence,
-                                reporterConfirmed, reporterFeedback, reporterEmail, createdAt);
+                                Boolean.TRUE.equals(reporterConfirmed), reporterFeedback, reporterEmail, createdAt);
         }
 }
